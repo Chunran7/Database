@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/srtpchen
+    username: root
+    password: 123456
+server:
+  port: 8080
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 管理员简单 token 配置，用于后端管理接口的简单校验
+admin:
+  token: secret-admin-token
