@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/srtpchen
+    url: jdbc:mysql://localhost:3306/DBproject
     username: root
     password: 123456
 server:
