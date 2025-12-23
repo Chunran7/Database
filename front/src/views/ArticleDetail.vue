@@ -1,151 +1,197 @@
 <template>
-    <el-container class="article-detail-container">
-        <!-- 主体内容 -->
-        <el-main class="main">
-            <div class="main-container">
-                <div v-if="article" class="content">
-                    <div class="article-title">{{ article.title }}</div>
-                    <div class="article-info">
-                        <span class="article-author">作者: {{ article.author }}</span>
-                        <span class="article-time">更新时间: {{ article.createTime }}</span>
-                    </div>
-                    <div class="article-content" v-html="renderedContent"></div>
-                </div>
-                <div v-else class="article-title">正在加载...</div>
+  <div class="container">
+    <el-card class="card" v-if="article">
+      <template #header>
+        <div class="header">
+          <div class="left">
+            <div class="title">{{ article.title }}</div>
+            <div class="meta">
+              <el-avatar :src="article.authorPic || defaultAvatar" :size="28" />
+              <span class="author">{{ article.author || '匿名用户' }}</span>
+              <span class="time">{{ formatTime(article.createTime) }}</span>
+              <span class="stat">浏览 {{ article.views || 0 }}</span>
+              <span class="stat">赞 {{ article.likeCount || 0 }}</span>
             </div>
-        </el-main>
+          </div>
 
-        <!-- 页脚 -->
-        <Footer />
-    </el-container>
+          <div class="right">
+            <el-button
+              v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
+              :type="authorProfile.followed ? 'primary' : 'default'"
+              @click="toggleFollowAuthor"
+            >
+              {{ authorProfile.followed ? '已关注' : '关注' }}
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <img v-if="article.firstPicture" :src="article.firstPicture" class="cover" />
+      <div v-if="article.description" class="desc">{{ article.description }}</div>
+      <div class="content">{{ article.content }}</div>
+
+      <div class="actions">
+        <el-button :type="article.liked ? 'primary' : 'default'" :disabled="!token" @click="toggleLike">
+          {{ article.liked ? '已赞' : '点赞' }} ({{ article.likeCount || 0 }})
+        </el-button>
+        <el-button :type="article.favorited ? 'warning' : 'default'" :disabled="!token" @click="toggleFavorite">
+          {{ article.favorited ? '已藏' : '收藏' }}
+        </el-button>
+      </div>
+    </el-card>
+
+    <el-card class="card" v-else>
+      <el-skeleton :rows="8" animated />
+    </el-card>
+  </div>
 </template>
 
 <script setup>
-import Footer from '../components/Footer.vue'
-import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { marked } from 'marked';
-import { computed } from 'vue';
-import { getArticleByIdService } from '@/api/article.js'; // 导入文章详情服务函数
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import defaultAvatar from '@/assets/default.png'
 
+import { getArticleByIdService, toggleArticleLikeService, toggleArticleFavoriteService } from '@/api/article'
+import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
 
-const route = useRoute();
-const article = ref(null);
+const route = useRoute()
+const router = useRouter()
+const token = localStorage.getItem('token')
+const id = ref(route.params.id)
 
-const renderedContent = computed(() => {
-    if (article.value && article.value.content) {
-        return marked(article.value.content);
-    }
-    return '错误';
-});
+const article = ref(null)
+const me = ref(null)
+const authorProfile = ref(null)
 
-const getArticleDetail = async () => {
-    try {
-        const id = route.params.id;
-        // 使用API服务函数替代直接调用request
-        const res = await getArticleByIdService(id);
-        console.log('后端返回的数据:', res)
-        if (res.code === 0) {
-            console.log('文章数据:', res.data); // 添加这行来查看具体字段
-            article.value = res.data;
-        } else {
-            ElMessage.error(res.msg);
-        }
-    } catch (err) {
-        console.error('Failed to fetch article detail:', err);
-    }
-
-
+const formatTime = (t) => {
+  if (!t) return ''
+  const d = new Date(t)
+  if (isNaN(d.getTime())) return String(t)
+  return d.toLocaleString()
 }
 
-onMounted(() => {
-    getArticleDetail()
-})
+const goLogin = () => router.push('/login')
 
+const loadMe = async () => {
+  if (!token) return
+  try {
+    me.value = await getMeService()
+  } catch {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+}
+
+const loadArticle = async () => {
+  try {
+    article.value = await getArticleByIdService(id.value)
+    try {
+      authorProfile.value = await getUserProfileService(article.value.userId)
+    } catch (_) {}
+  } catch (e) {
+    ElMessage.error(e?.message || '加载文章失败')
+  }
+}
+
+const toggleLike = async () => {
+  if (!token) return goLogin()
+  try {
+    const res = await toggleArticleLikeService(id.value)
+    article.value.liked = !!res.liked
+    article.value.likeCount = res.likeCount
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+const toggleFavorite = async () => {
+  if (!token) return goLogin()
+  try {
+    const res = await toggleArticleFavoriteService(id.value)
+    article.value.favorited = !!res.favorited
+    ElMessage.success(article.value.favorited ? '已收藏' : '已取消收藏')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+const toggleFollowAuthor = async () => {
+  if (!token) return goLogin()
+  try {
+    authorProfile.value = await toggleFollowService(article.value.userId)
+    ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+onMounted(async () => {
+  await loadMe()
+  await loadArticle()
+})
 </script>
 
 <style scoped>
-.article-detail-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 12px;
 }
 
-.main {
-    border: 10cm;
-    background-color: #f3f3f3;
-    flex: 1;
-    padding: 20px 0;
+.card {
+  border-radius: 12px;
 }
 
-.main-container {
-    width: 60%;
-    min-height: 60vh;
-    background-color: #ffffff;
-    margin: 30px auto;
-    border-radius: 25px;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.article-title {
-    text-align: center;
-    font-size: 30px;
-    padding: 40px 0 10px 0;
+.title {
+  font-size: 18px;
+  font-weight: 800;
 }
 
-.article-info {
-    text-align: center;
-    color: #888;
-    margin-bottom: 20px;
+.meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
 }
 
-.article-author {
-    margin-right: 20px;
+.cover {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
 }
 
-.article-time {
-    margin-left: 20px;
+.desc {
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7f7f7;
+  margin-bottom: 12px;
+  color: #666;
 }
 
-.article-content {
-    padding: 0 40px 80px 40px;
-    line-height: 1.8;
-    font-size: 18px;
-    width: 70%;
-    text-align: justify;
-    text-align-last: left;
-    text-indent: 2em;
-    margin: 0 auto;
-
-
-    /* 保留换行符 */
+.content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
 }
 
-.article-content :deep(h1) {
-    font-size: 2em;
-    /* 字体大小: 2倍于父元素 */
-    margin: 0.67em 0;
-    /* 上下边距 */
-}
-
-.article-content :deep(h2) {
-    font-size: 1.5em;
-    /* 字体大小: 1.5倍于父元素 */
-    margin: 0.83em 0;
-    /* 上下边距 */
-}
-
-.article-content :deep(pre) {
-    line-height: 1.2;
-    margin: 1em 0;
-}
-
-/* 添加段落间间距控制 */
-.article-content :deep(p) {
-    margin: 0.8em 0;
-}
-
-p {
-    margin: 0;
+.actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
 }
 </style>

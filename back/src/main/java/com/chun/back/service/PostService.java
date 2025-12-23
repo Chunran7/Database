@@ -1,26 +1,19 @@
 package com.chun.back.service;
 
 import com.chun.back.pojo.Post;
+
 import java.util.List;
+import java.util.Map;
 
 public interface PostService {
-    /**
-     * 根据ID获取帖子
-     * @param id 帖子ID
-     * @return 帖子对象
-     */
-    Post getPostById(Long id);
-    
-    /**
-     * 获取所有帖子
-     * @return 帖子列表
-     */
-    List<Post> getAllPosts(int page, int pageSize, String sortBy, String order);
-    
-    /**
-     * 创建新帖子
-     * @param post 帖子对象
-     * @return 是否创建成功
-     */
-    boolean createPost(Post post);
+
+    List<Post> list(int page, int pageSize, String sortBy, String order, String keyword, Long viewerId);
+
+    Post getById(Long postId, Long viewerId);
+
+    Long create(Long userId, String title, String content);
+
+    Map<String, Object> toggleLike(Long postId, Long userId);
+
+    Map<String, Object> toggleFavorite(Long postId, Long userId);
 }

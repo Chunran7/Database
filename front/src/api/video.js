@@ -1,19 +1,18 @@
-import request from "@/utils/request";
+import request from "@/utils/request.js";
 
-// 获取视频列表
-export const getVideoListService = () => {
-  return request.get("/video/list");
+// 视频列表
+export const getVideoListService = ({ page = 1, pageSize = 10, sortBy = "create_time", order = "DESC", keyword = "" } = {}) => {
+  return request.get("/video/list", { params: { page, pageSize, sortBy, order, keyword } });
 };
 
-// 获取视频详情
-export const getVideoByIdService = (id) => {
-  return request.get(`/video/${id}`);
-};
+// 视频详情
+export const getVideoByIdService = (id) => request.get(`/video/${id}`);
 
-export const getVideoLatestService = (count = 8) => {
-  return request.get("/video/latest", {
-    params: {
-      count
-    }
-  });
-};
+// 最新视频
+export const getVideoLatestService = (count = 8) => request.get("/video/latest", { params: { count } });
+
+// 点赞 / 取消点赞（需要登录）
+export const toggleVideoLikeService = (id) => request.post(`/video/${id}/like/toggle`);
+
+// 收藏 / 取消收藏（需要登录）
+export const toggleVideoFavoriteService = (id) => request.post(`/video/${id}/favorite/toggle`);

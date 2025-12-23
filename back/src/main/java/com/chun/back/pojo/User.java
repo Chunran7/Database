@@ -1,19 +1,28 @@
 package com.chun.back.pojo;
 
-import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
-
+import java.time.LocalDateTime;
 
 @Data
 public class User {
-    private Integer id;          // 修改为Integer以匹配数据库INT类型
+    private Long id;
     private String username;
-    private String password;
+
+    @JsonIgnore
+    private String passwordHash;
+
     private String nickname;
     private String email;
-    private String userPic;      // 对应user_pic字段
+    private String userPic;
+    private Integer status;
+
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    // 公开主页/个人中心扩展字段
+    private Integer followerCount;
+    private Integer followingCount;
+    private Boolean followed; // viewer 是否关注了该用户
 }

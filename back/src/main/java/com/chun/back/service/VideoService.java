@@ -3,13 +3,19 @@ package com.chun.back.service;
 import com.chun.back.pojo.Video;
 
 import java.util.List;
+import java.util.Map;
 
 public interface VideoService {
-    Video getVideoById(Long id);
 
-    List<Video> getVideoList();
+    List<Video> list(int page, int pageSize, String sortBy, String order, String keyword, Long viewerId);
 
-    List<Video> getLatestVideoList(Integer count);
+    List<Video> latest(int count, Long viewerId);
 
-    int insertVideo(Video video);
+    Video getById(Long id, Long viewerId);
+
+    Long create(Video video);
+
+    Map<String, Object> toggleLike(Long videoId, Long userId);
+
+    Map<String, Object> toggleFavorite(Long videoId, Long userId);
 }

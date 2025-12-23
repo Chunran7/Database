@@ -1,448 +1,344 @@
 <template>
-  <div class="post-detail-page container">
-    <el-card v-if="post" class="post-card">
+  <div class="container">
+    <el-card class="card" v-if="post">
       <template #header>
-        <div class="post-header">
-          <h2>{{ post.title }}</h2>
-          <div class="post-meta">
-            <span class="author">作者: {{ post.author || '匿名用户' }}</span>
-            <span class="time">发布时间: {{ formatTime(post.createTime) }}</span>
-          </div>
-        </div>
-      </template>
-      <div class="post-content">
-        {{ post.content }}
-      </div>
-    </el-card>
-
-    <!-- 评论区域 -->
-    <div class="comments-section">
-      <h3>评论 ({{ comments.length }})</h3>
-      
-      <!-- 回复表单 -->
-      <el-card class="reply-form-card">
-        <div class="reply-form-header">
-          <h4>发表回复</h4>
-        </div>
-        <el-form :model="replyForm" ref="replyFormRef">
-          <el-form-item prop="content">
-            <el-input
-              v-model="replyForm.content"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入您的回复..."
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button 
-              type="primary" 
-              @click="submitReply"
-              :loading="replyLoading"
-            >
-              发表回复
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-
-      <!-- 评论列表 -->
-      <div class="comments-list">
-        <el-card 
-          v-for="comment in comments" 
-          :key="comment.id" 
-          class="comment-card"
-        >
-          <div class="comment-header">
-            <span class="comment-author">{{ comment.author || '匿名用户' }}</span>
-            <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
-          </div>
-          <div class="comment-content">
-            {{ comment.content }}
-          </div>
-          
-          <!-- 回复特定评论的表单 -->
-          <div class="reply-to-comment">
-            <el-button 
-              size="small" 
-              type="primary" 
-              link
-              @click="showReplyToForm(comment)"
-            >
-              回复
-            </el-button>
-            
-            <div v-if="replyToCommentId === comment.id" class="nested-reply-form">
-              <el-form :model="nestedReplyForm" @submit.prevent="submitNestedReply(comment)">
-                <el-form-item prop="content">
-                  <el-input
-                    v-model="nestedReplyForm.content"
-                    type="textarea"
-                    :rows="2"
-                    placeholder="请输入您的回复..."
-                  />
-                </el-form-item>
-                <el-form-item>
-                  <el-button 
-                    type="primary" 
-                    size="small"
-                    @click="submitNestedReply(comment)"
-                    :loading="replyLoading"
-                  >
-                    提交回复
-                  </el-button>
-                  <el-button 
-                    size="small" 
-                    @click="cancelNestedReply"
-                  >
-                    取消
-                  </el-button>
-                </el-form-item>
-              </el-form>
+        <div class="header">
+          <div class="left">
+            <div class="title">{{ post.title }}</div>
+            <div class="meta">
+              <el-avatar :src="post.authorPic || defaultAvatar" :size="30" />
+              <span class="author">{{ post.author || '匿名用户' }}</span>
+              <span class="time">{{ formatTime(post.createTime) }}</span>
+              <span class="stat">浏览 {{ post.views || 0 }}</span>
+              <span class="stat">回复 {{ post.replyCount || 0 }}</span>
+              <span class="stat">赞 {{ post.likeCount || 0 }}</span>
             </div>
           </div>
 
-          <!-- 子评论 -->
-          <div v-if="comment.replies && comment.replies.length" class="sub-comments">
-            <el-card 
-              v-for="subComment in comment.replies" 
-              :key="subComment.id" 
-              class="sub-comment-card"
+          <div class="right">
+            <el-button
+              v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
+              :type="authorProfile.followed ? 'primary' : 'default'"
+              @click="toggleFollowAuthor"
             >
-              <div class="sub-comment-header">
-                <span class="sub-comment-author">{{ subComment.author || '匿名用户' }}</span>
-                <span class="sub-comment-time">{{ formatTime(subComment.createTime) }}</span>
-              </div>
-              <div class="sub-comment-content">
-                {{ subComment.content }}
-              </div>
-            </el-card>
+              {{ authorProfile.followed ? '已关注' : '关注' }}
+            </el-button>
           </div>
-        </el-card>
-        
-        <div v-if="comments.length === 0" class="no-comments">
-          暂无评论，快来发表第一条评论吧！
+        </div>
+      </template>
+
+      <div class="content">{{ post.content }}</div>
+
+      <div class="actions">
+        <el-button :type="post.liked ? 'primary' : 'default'" :disabled="!token" @click="toggleLike">
+          {{ post.liked ? '已赞' : '点赞' }} ({{ post.likeCount || 0 }})
+        </el-button>
+        <el-button :type="post.favorited ? 'warning' : 'default'" :disabled="!token" @click="toggleFavorite">
+          {{ post.favorited ? '已藏' : '收藏' }}
+        </el-button>
+      </div>
+    </el-card>
+
+    <el-card class="card" v-else>
+      <el-skeleton :rows="6" animated />
+    </el-card>
+
+    <el-card class="card">
+      <template #header>
+        <div class="header2">
+          <span>评论（树状）</span>
+          <el-button link @click="loadComments">刷新</el-button>
+        </div>
+      </template>
+
+      <div v-if="!token" class="tip">
+        需要登录后才能发表评论/回复/点赞/收藏。<el-button link type="primary" @click="goLogin">去登录</el-button>
+      </div>
+
+      <div class="reply-box" v-if="token">
+        <div class="replying" v-if="replyTarget">
+          正在回复：<b>{{ replyTarget.author }}</b>
+          <el-button link @click="cancelReply">取消</el-button>
+        </div>
+        <el-input v-model="commentContent" type="textarea" :rows="3" placeholder="写下你的评论..." />
+        <div class="reply-actions">
+          <el-button type="primary" :loading="commentSubmitting" @click="submitComment">发布</el-button>
         </div>
       </div>
-    </div>
+
+      <div v-if="commentLoading" style="padding: 10px 0">
+        <el-skeleton :rows="6" animated />
+      </div>
+
+      <div v-else>
+        <div v-if="comments.length === 0" class="empty">暂无评论</div>
+        <CommentNode
+          v-for="c in comments"
+          :key="c.id"
+          :node="c"
+          :depth="0"
+          :currentUserId="me?.id"
+          @reply="onReply"
+          @delete="onDelete"
+        />
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import defaultAvatar from '@/assets/default.png'
 
-// 模拟数据
+import CommentNode from '@/components/CommentNode.vue'
+import {
+  getPostByIdService,
+  getPostCommentsService,
+  createCommentService,
+  deleteCommentService,
+  togglePostLikeService,
+  togglePostFavoriteService
+} from '@/api/post'
+import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
+
 const route = useRoute()
+const router = useRouter()
+const token = localStorage.getItem('token')
+
+const id = ref(route.params.id)
 const post = ref(null)
+const me = ref(null)
+const authorProfile = ref(null)
+
 const comments = ref([])
-const replyToCommentId = ref(null)
+const commentLoading = ref(false)
+const commentContent = ref('')
+const commentSubmitting = ref(false)
+const replyTarget = ref(null)
 
-// 表单相关
-const replyFormRef = ref(null)
-const replyLoading = ref(false)
+const formatTime = (t) => {
+  if (!t) return ''
+  const d = new Date(t)
+  if (isNaN(d.getTime())) return String(t)
+  return d.toLocaleString()
+}
 
-const replyForm = reactive({
-  content: ''
-})
+const goLogin = () => router.push('/login')
 
-const nestedReplyForm = reactive({
-  content: ''
-})
-
-// 获取帖子详情
-const loadPostDetail = async () => {
+const loadMe = async () => {
+  if (!token) return
   try {
-    // 模拟API调用
-    // 实际应该使用类似 postService.getPostById(route.params.id) 的方法
-    
-    // 模拟数据
-    post.value = {
-      id: route.params.id,
-      title: '示例帖子标题',
-      content: '这是帖子的内容，用户可以在这里查看帖子的详细内容。这是一个示例帖子，用于演示如何展示帖子详情。',
-      author: '张三',
-      createTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 24小时前
-    }
-    
-    // 加载评论
-    loadComments()
-  } catch (error) {
-    console.error('获取帖子详情失败:', error)
-    ElMessage.error('获取帖子详情失败')
+    me.value = await getMeService()
+  } catch (e) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }
 }
 
-// 获取评论列表
+const loadPost = async () => {
+  try {
+    post.value = await getPostByIdService(id.value)
+    // 拉作者 profile，显示关注按钮
+    try {
+      authorProfile.value = await getUserProfileService(post.value.userId)
+    } catch (_) {}
+  } catch (e) {
+    ElMessage.error(e?.message || '加载帖子失败')
+  }
+}
+
 const loadComments = async () => {
+  commentLoading.value = true
   try {
-    // 模拟API调用
-    // 实际应该使用类似 postService.getCommentsByPostId(route.params.id) 的方法
-    
-    // 模拟数据
-    comments.value = [
-      {
-        id: 1,
-        content: '这是一个很好的观点，我同意你的看法。',
-        author: '李四',
-        createTime: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12小时前
-        replies: [
-          {
-            id: 11,
-            content: '谢谢你的赞同，我也觉得这个想法很不错。',
-            author: '张三',
-            createTime: new Date(Date.now() - 11 * 60 * 60 * 1000).toISOString() // 11小时前
-          }
-        ]
-      },
-      {
-        id: 2,
-        content: '我对这个问题有一些不同的看法，我觉得...',
-        author: '王五',
-        createTime: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() // 6小时前
-      }
-    ]
-  } catch (error) {
-    console.error('获取评论失败:', error)
-    ElMessage.error('获取评论失败')
+    comments.value = await getPostCommentsService(id.value)
+  } catch (e) {
+    ElMessage.error(e?.message || '加载评论失败')
+  } finally {
+    commentLoading.value = false
   }
 }
 
-// 发表回复（主贴）
-const submitReply = async () => {
-  if (!replyForm.content.trim()) {
-    ElMessage.warning('请输入回复内容')
+const onReply = (node) => {
+  if (!token) return goLogin()
+  replyTarget.value = node
+}
+
+const cancelReply = () => {
+  replyTarget.value = null
+}
+
+const submitComment = async () => {
+  if (!token) return goLogin()
+  const content = commentContent.value.trim()
+  if (!content) return ElMessage.warning('评论不能为空')
+
+  commentSubmitting.value = true
+  try {
+    await createCommentService({
+      postId: Number(id.value),
+      content,
+      parentId: replyTarget.value ? replyTarget.value.id : 0,
+      replyUserId: replyTarget.value ? replyTarget.value.userId : null
+    })
+    ElMessage.success('发布成功')
+    commentContent.value = ''
+    replyTarget.value = null
+    await loadComments()
+    await loadPost() // 更新 replyCount
+  } catch (e) {
+    ElMessage.error(e?.message || '发布失败')
+  } finally {
+    commentSubmitting.value = false
+  }
+}
+
+const onDelete = async (node) => {
+  if (!token) return goLogin()
+  try {
+    await ElMessageBox.confirm('确认删除这条评论吗？删除后会显示“已删除”占位。', '提示', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
+  } catch {
     return
   }
 
   try {
-    replyLoading.value = true
-    
-    // 模拟API调用
-    // 实际应该使用类似 postService.addComment({postId: route.params.id, content: replyForm.content}) 的方法
-    
-    // 模拟添加评论成功
-    const newComment = {
-      id: Date.now(), // 简单生成唯一ID
-      content: replyForm.content,
-      author: '当前用户',
-      createTime: new Date().toISOString()
-    }
-    
-    comments.value.unshift(newComment)
-    replyForm.content = ''
-    ElMessage.success('回复发表成功')
-  } catch (error) {
-    console.error('发表回复失败:', error)
-    ElMessage.error('发表回复失败')
-  } finally {
-    replyLoading.value = false
+    await deleteCommentService(node.id)
+    ElMessage.success('已删除')
+    await loadComments()
+    await loadPost()
+  } catch (e) {
+    ElMessage.error(e?.message || '删除失败')
   }
 }
 
-// 显示回复特定评论的表单
-const showReplyToForm = (comment) => {
-  replyToCommentId.value = comment.id
-  nestedReplyForm.content = ''
-}
-
-// 取消回复特定评论
-const cancelNestedReply = () => {
-  replyToCommentId.value = null
-  nestedReplyForm.content = ''
-}
-
-// 回复特定评论
-const submitNestedReply = async (parentComment) => {
-  if (!nestedReplyForm.content.trim()) {
-    ElMessage.warning('请输入回复内容')
-    return
-  }
-
+const toggleLike = async () => {
+  if (!token) return goLogin()
   try {
-    replyLoading.value = true
-    
-    // 模拟API调用
-    // 实际应该使用类似 postService.addComment({
-    //   postId: route.params.id, 
-    //   content: nestedReplyForm.content, 
-    //   parentId: parentComment.id
-    // }) 的方法
-    
-    // 模拟添加子评论成功
-    const newSubComment = {
-      id: Date.now(),
-      content: nestedReplyForm.content,
-      author: '当前用户',
-      createTime: new Date().toISOString()
-    }
-    
-    // 将子评论添加到对应的父评论中
-    if (!parentComment.replies) {
-      parentComment.replies = []
-    }
-    parentComment.replies.push(newSubComment)
-    
-    nestedReplyForm.content = ''
-    replyToCommentId.value = null
-    ElMessage.success('回复发表成功')
-  } catch (error) {
-    console.error('发表回复失败:', error)
-    ElMessage.error('发表回复失败')
-  } finally {
-    replyLoading.value = false
+    const res = await togglePostLikeService(id.value)
+    post.value.liked = !!res.liked
+    post.value.likeCount = res.likeCount
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
   }
 }
 
-// 格式化时间显示
-const formatTime = (time) => {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now - date
-
-  // 如果是当天发布的，显示小时数
-  if (diff < 24 * 60 * 60 * 1000 && now.getDate() === date.getDate()) {
-    const hours = Math.floor(diff / (60 * 60 * 1000))
-    if (hours > 0) {
-      return `${hours}小时前`
-    } else {
-      const minutes = Math.floor(diff / (60 * 1000))
-      return `${minutes}分钟前`
-    }
+const toggleFavorite = async () => {
+  if (!token) return goLogin()
+  try {
+    const res = await togglePostFavoriteService(id.value)
+    post.value.favorited = !!res.favorited
+    ElMessage.success(post.value.favorited ? '已收藏' : '已取消收藏')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
   }
-
-  // 如果是当年发布的，显示月日
-  if (now.getFullYear() === date.getFullYear()) {
-    return `${date.getMonth() + 1}-${date.getDate()}`
-  }
-
-  // 跨年的显示年月日
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
-onMounted(() => {
-  loadPostDetail()
+const toggleFollowAuthor = async () => {
+  if (!token) return goLogin()
+  try {
+    authorProfile.value = await toggleFollowService(post.value.userId)
+    ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+onMounted(async () => {
+  await loadMe()
+  await loadPost()
+  await loadComments()
 })
 </script>
 
-<style lang="scss" scoped>
-.post-detail-page {
-  padding: 24px 40px;
-  
-  .post-card {
-    margin-bottom: 24px;
-    
-    .post-header {
-      h2 {
-        margin: 0 0 12px 0;
-        color: #333;
-      }
-      
-      .post-meta {
-        display: flex;
-        gap: 20px;
-        color: #666;
-        font-size: 14px;
-      }
-    }
-    
-    .post-content {
-      white-space: pre-wrap;
-      line-height: 1.6;
-      color: #444;
-    }
-  }
-  
-  .comments-section {
-    h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-    }
-    
-    .reply-form-card {
-      margin-bottom: 24px;
-      
-      .reply-form-header {
-        margin-bottom: 16px;
-        
-        h4 {
-          margin: 0;
-          color: #333;
-        }
-      }
-    }
-    
-    .comment-card {
-      margin-bottom: 16px;
-      
-      .comment-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        font-size: 14px;
-        
-        .comment-author {
-          font-weight: bold;
-          color: #333;
-        }
-        
-        .comment-time {
-          color: #999;
-        }
-      }
-      
-      .comment-content {
-        margin-bottom: 12px;
-        line-height: 1.5;
-        color: #555;
-      }
-      
-      .reply-to-comment {
-        text-align: right;
-        
-        .nested-reply-form {
-          margin-top: 12px;
-        }
-      }
-      
-      .sub-comments {
-        margin-top: 16px;
-        padding-left: 20px;
-        
-        .sub-comment-card {
-          margin-bottom: 12px;
-          
-          .sub-comment-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 13px;
-            
-            .sub-comment-author {
-              font-weight: bold;
-              color: #555;
-            }
-            
-            .sub-comment-time {
-              color: #aaa;
-            }
-          }
-          
-          .sub-comment-content {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.4;
-          }
-        }
-      }
-    }
-    
-    .no-comments {
-      text-align: center;
-      color: #999;
-      padding: 40px 0;
-    }
-  }
+<style scoped>
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+}
+
+.actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.header2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tip {
+  padding: 10px;
+  background: #f7f9ff;
+  border: 1px solid #e6efff;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.reply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.replying {
+  font-size: 13px;
+  color: #555;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.empty {
+  color: #888;
+  padding: 10px 0;
 }
 </style>

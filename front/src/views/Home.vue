@@ -35,7 +35,7 @@
                     <el-row :gutter="24" v-else>
                         <el-col :span="8" v-for="article in articles" :key="article.id">
                             <el-card shadow="hover" class="article-card" @click="goToArticle(article.id)">
-                                <img :src="article.firstpicture || 'https://placehold.co/300x150'" alt="封面图"
+                                <img :src="article.firstPicture || 'https://placehold.co/300x150'" alt="封面图"
                                     class="article-img" />
                                 <h3 class="article-title">{{ article.title }}</h3>
                                 <p class="article-description">{{ truncate(article.description, 35) }}</p>

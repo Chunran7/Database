@@ -3,14 +3,19 @@ package com.chun.back.service;
 import com.chun.back.pojo.Article;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ArticleService {
-    Article getArticleById(Long id);
 
-    List<Article> getArticleList();
+    List<Article> list(int page, int pageSize, String sortBy, String order, String keyword, Long viewerId);
 
-    List<Article> getLatestArticleList(Integer count);
+    List<Article> latest(int count, Long viewerId);
 
-    // 插入文章
-    int insertArticle(Article article);
+    Article getById(Long id, Long viewerId);
+
+    Long create(Article article);
+
+    Map<String, Object> toggleLike(Long articleId, Long userId);
+
+    Map<String, Object> toggleFavorite(Long articleId, Long userId);
 }

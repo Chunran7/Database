@@ -1,26 +1,27 @@
-// 导入request.js请求工具
 import request from '@/utils/request.js'
 
-//调用注册接口函数
-export const userRegisterService=(registerData)=>{
-    //将json数据传递给后端，格式为x-www-form-urlencoded
-    //借助url-search-params
-    const params = new URLSearchParams();
-    for (const key in registerData) {
-        params.append(key, registerData[key]);
-    }
-    return request.post('/user/register',params);
+// 注册（x-www-form-urlencoded）
+export const userRegisterService = (registerData) => {
+  const params = new URLSearchParams()
+  for (const key in registerData) params.append(key, registerData[key])
+  return request.post('/user/register', params)
 }
 
-//调用登录接口函数
-export const userLoginService=(loginData)=>{
-    //将json数据传递给后端，格式为x-www-form-urlencoded
-    //借助url-search-params
-    const params = new URLSearchParams();
-    for (const key in loginData) {
-        params.append(key, loginData[key]);
-    }
-    return request.post('/user/login',params);
+// 登录（x-www-form-urlencoded）
+export const userLoginService = (loginData) => {
+  const params = new URLSearchParams()
+  for (const key in loginData) params.append(key, loginData[key])
+  return request.post('/user/login', params)
 }
 
+// 当前登录用户
+export const getMeService = () => request.get('/user/me')
 
+// 用户公开主页（可匿名）
+export const getUserProfileService = (id) => request.get(`/user/profile/${id}`)
+
+// 更新个人资料（需要登录）
+export const updateProfileService = (data) => request.put('/user/profile', data)
+
+// 关注 / 取消关注（需要登录）
+export const toggleFollowService = (id) => request.post(`/user/follow/${id}/toggle`)

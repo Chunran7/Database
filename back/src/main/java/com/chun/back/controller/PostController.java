@@ -2,12 +2,15 @@ package com.chun.back.controller;
 
 import com.chun.back.pojo.Post;
 import com.chun.back.pojo.Result;
+import com.chun.back.service.CommentService;
 import com.chun.back.service.PostService;
+import com.chun.back.utils.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/post")
@@ -16,67 +19,77 @@ public class PostController {
     @Autowired
     private PostService postService;
 
-    /**
-     * 发布新帖子
-     * 
-     * @param post 帖子信息
-     * @return 发布结果
-     */
-    @PostMapping
-    public Result createPost(@RequestBody Post post, HttpServletRequest request) {
-        // 从拦截器中取出解析好的claims
-        Object c = request.getAttribute("claims");
-        if (c == null) {
-            return Result.error("需要登录");
-        }
-        @SuppressWarnings("unchecked")
-        java.util.Map<String, Object> claims = (java.util.Map<String, Object>) c;
-        // 设置当前登录用户id到帖子实体中
-        Object idObj = claims.get("id");
-        if (idObj instanceof Number) {
-            post.setUserId(((Number) idObj).longValue());
-        } else if (idObj instanceof String) {
-            try {
-                post.setUserId(Long.parseLong((String) idObj));
-            } catch (NumberFormatException ignored) {
-            }
-        }
+    @Autowired
+    private CommentService commentService;
 
-        boolean success = postService.createPost(post);
-        if (success) {
-            return Result.success("帖子发布成功");
-        } else {
-            return Result.error("帖子发布失败");
+    private Long getLoginUserId(HttpServletRequest request) {
+        Object obj = request.getAttribute("claims");
+        if (obj instanceof Map<?, ?> m) {
+            Object id = m.get("id");
+            if (id != null) return Long.valueOf(id.toString());
+        }
+        return null;
+    }
+
+    private Long tryGetViewerId(HttpServletRequest request) {
+        String auth = request.getHeader("Authorization");
+        if (auth == null || auth.isBlank()) return null;
+        String token = auth.startsWith("Bearer ") ? auth.substring(7) : auth;
+        try {
+            Map<String, Object> claims = JwtUtil.parseToken(token);
+            Object id = claims.get("id");
+            return id == null ? null : Long.valueOf(id.toString());
+        } catch (Exception e) {
+            return null;
         }
     }
 
-    /**
-     * 根据ID查询帖子
-     * 
-     * @param id 帖子ID
-     * @return 帖子信息
-     */
-    @GetMapping("/{id}")
-    public Result getPostById(@PathVariable Long id) {
-        Post post = postService.getPostById(id);
-        if (post != null) {
-            return Result.success(post);
-        } else {
-            return Result.error("未找到帖子");
-        }
-    }
-
-    /**
-     * 查询所有帖子
-     * 
-     * @return 帖子列表
-     */
     @GetMapping("/list")
-    public Result getAllPosts(@RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "create_time") String sortBy,
-            @RequestParam(defaultValue = "desc") String order) {
-        List<Post> posts = postService.getAllPosts(page, pageSize, sortBy, order);
-        return Result.success(posts);
+    public Result list(@RequestParam(defaultValue = "1") int page,
+                       @RequestParam(defaultValue = "10") int pageSize,
+                       @RequestParam(required = false) String sortBy,
+                       @RequestParam(required = false) String order,
+                       @RequestParam(required = false) String keyword,
+                       HttpServletRequest request) {
+        Long viewerId = tryGetViewerId(request);
+        List<Post> list = postService.list(page, pageSize, sortBy, order, keyword, viewerId);
+        return Result.success(list);
+    }
+
+    @GetMapping("/{id}")
+    public Result detail(@PathVariable Long id, HttpServletRequest request) {
+        Long viewerId = tryGetViewerId(request);
+        Post post = postService.getById(id, viewerId);
+        if (post == null) return Result.error("帖子不存在或已删除");
+        return Result.success(post);
+    }
+
+    @PostMapping
+    public Result create(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        String title = body.get("title");
+        String content = body.get("content");
+        if (title == null || title.isBlank() || content == null || content.isBlank()) {
+            return Result.error("标题和内容不能为空");
+        }
+        Long id = postService.create(userId, title, content);
+        return Result.success(id);
+    }
+
+    @GetMapping("/{id}/comments")
+    public Result comments(@PathVariable Long id) {
+        return Result.success(commentService.listTree(id));
+    }
+
+    @PostMapping("/{id}/like/toggle")
+    public Result toggleLike(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(postService.toggleLike(id, userId));
+    }
+
+    @PostMapping("/{id}/favorite/toggle")
+    public Result toggleFavorite(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(postService.toggleFavorite(id, userId));
     }
 }

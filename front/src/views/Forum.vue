@@ -1,509 +1,387 @@
 <template>
-    <div class="forum-page container">
-        <aside class="forum-aside">
-            <div class="user-card" @click="goToProfile">
-                <div class="user-avatar">
-                    <img :src="currentUser.avatar || defaultAvatar" alt="avatar" />
-                </div>
-                <div class="user-info">
-                    <div class="user-nickname">{{ currentUser.nickname || '未登录' }}</div>
-                    <div class="user-action">点击编辑个人信息</div>
-                </div>
-            </div>
-            <el-button class="btn-post" @click="openPostDialog">发布主题</el-button>
-            <div class="aside-list">
-                <div class="aside-item active">
-                    <span>全部主题</span>
-                </div>
-            </div>
-        </aside>
+  <div class="forum-page container">
+    <aside class="forum-aside">
+      <div class="user-card" @click="goToProfile">
+        <div class="user-avatar">
+          <img :src="me?.userPic || defaultAvatar" alt="avatar" />
+        </div>
+        <div class="user-info">
+          <div class="user-nickname">{{ me?.nickname || me?.username || '未登录' }}</div>
+          <div class="user-action">{{ token ? '点击编辑个人信息' : '点击去登录' }}</div>
+        </div>
+      </div>
 
-        <main class="forum-main">
-            <div class="toolbar">
-                <div class="tabs">
-                    <el-button class="tab" :class="{ active: sortType === 'reply' }"
-                        @click="changeSort('reply')">最多回复</el-button>
-                    <el-button class="tab" :class="{ active: sortType === 'publish' }"
-                        @click="changeSort('publish')">最新发布</el-button>
-                </div>
-            </div>
+      <el-button class="btn-post" type="primary" @click="openPostDialog">发布帖子</el-button>
 
-            <ul class="post-list">
-                <li v-for="(post, idx) in posts" :key="idx" class="post-item">
-                    <div class="post-avatar">
-                        <img :src="post.avatar || defaultAvatar" alt="" />
-                    </div>
-                    <div class="post-body">
-                        <div class="post-header">
-                            <h3 class="post-title" @click="goToPostDetail(post.id)">
-                                {{ post.title }}
-                            </h3>
+      <div class="filters">
+        <el-input v-model="keyword" placeholder="搜索标题/内容" clearable @keyup.enter="reload" />
+        <div class="row">
+          <el-select v-model="sortBy" placeholder="排序字段" style="width: 120px">
+            <el-option label="最新" value="create_time" />
+            <el-option label="最热(回复)" value="reply_count" />
+            <el-option label="最多赞" value="like_count" />
+            <el-option label="最多浏览" value="views" />
+          </el-select>
+          <el-select v-model="order" placeholder="顺序" style="width: 110px">
+            <el-option label="降序" value="DESC" />
+            <el-option label="升序" value="ASC" />
+          </el-select>
+          <el-button @click="reload">查询</el-button>
+        </div>
+      </div>
+    </aside>
 
-                        </div>
-                        <p class="post-excerpt">{{ post.excerpt }}</p>
-                    </div>
-                    <div class="post-right">
-                        <div class="replies">{{ post.replyCount }}</div>
-                        <div class="publish-time">{{ formatTime(post.createTime) }}</div>
-                    </div>
-                </li>
-            </ul>
-        </main>
-
-        <aside class="forum-right">
-            <div class="active-card">
-                <div class="card-title">当月活跃排行</div>
-                <ul>
-                    <li v-for="(user, i) in activeUsers" :key="i">
-                        <div class="user-dot" :style="{ backgroundImage: 'url(' + user.avatar + ')' }"></div>
-                        <div class="user-name">{{ user.name }}</div>
-                        <div class="user-count">{{ user.count }}</div>
-                    </li>
-                </ul>
-            </div>
-        </aside>
-    </div>
-
-    <!-- 发布主题对话框 -->
-    <el-dialog v-model="postDialogVisible" title="发布新主题" width="500">
-        <el-form :model="postForm" label-width="80px">
-            <el-form-item label="标题">
-                <el-input v-model="postForm.title" placeholder="请输入帖子标题" />
-            </el-form-item>
-            <el-form-item label="内容">
-                <el-input v-model="postForm.content" type="textarea" :rows="6" placeholder="请输入帖子内容" />
-            </el-form-item>
-        </el-form>
-        <template #footer>
-            <span class="dialog-footer">
-                <el-button @click="postDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="submitPost">发布</el-button>
-            </span>
+    <main class="forum-main">
+      <el-card class="post-list-card">
+        <template #header>
+          <div class="header">
+            <span>帖子列表</span>
+            <el-button link @click="reload">刷新</el-button>
+          </div>
         </template>
+
+        <div v-if="loading" style="padding: 12px 0">
+          <el-skeleton :rows="6" animated />
+        </div>
+
+        <div v-else>
+          <div v-if="posts.length === 0" class="empty">暂无帖子</div>
+
+          <div v-for="p in posts" :key="p.id" class="post-item">
+            <div class="left" @click="goDetail(p.id)">
+              <div class="title">{{ p.title }}</div>
+              <div class="meta">
+                <span class="author">作者：{{ p.author || '匿名用户' }}</span>
+                <span class="time">{{ formatTime(p.createTime) }}</span>
+                <span class="stat">浏览 {{ p.views || 0 }}</span>
+                <span class="stat">回复 {{ p.replyCount || 0 }}</span>
+                <span class="stat">赞 {{ p.likeCount || 0 }}</span>
+              </div>
+              <div class="preview">{{ p.content }}</div>
+            </div>
+
+            <div class="right">
+              <el-button
+                :type="p.liked ? 'primary' : 'default'"
+                size="small"
+                @click="toggleLike(p)"
+                :disabled="!token"
+              >
+                {{ p.liked ? '已赞' : '点赞' }}
+              </el-button>
+              <el-button
+                :type="p.favorited ? 'warning' : 'default'"
+                size="small"
+                @click="toggleFavorite(p)"
+                :disabled="!token"
+              >
+                {{ p.favorited ? '已藏' : '收藏' }}
+              </el-button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pager">
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :page-size="pageSize"
+            :current-page="page"
+            @current-change="onPageChange"
+          />
+        </div>
+      </el-card>
+    </main>
+
+    <el-dialog v-model="postDialogVisible" title="发布帖子" width="520px">
+      <el-form :model="postForm" label-width="70px">
+        <el-form-item label="标题">
+          <el-input v-model="postForm.title" maxlength="80" show-word-limit />
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input v-model="postForm.content" type="textarea" :rows="7" maxlength="2000" show-word-limit />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="postDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="postSubmitting" @click="submitPost">发布</el-button>
+      </template>
     </el-dialog>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import * as postService from '@/api/post.js'
 import defaultAvatar from '@/assets/default.png'
 import { useRouter } from 'vue-router'
+import { getMeService } from '@/api/user'
+import {
+  getAllpostsService,
+  insertPostService,
+  togglePostLikeService,
+  togglePostFavoriteService
+} from '@/api/post'
 
 const router = useRouter()
 
-// 当前用户（从 localStorage 读取）
-const currentUser = ref({})
+const token = localStorage.getItem('token')
+const me = ref(null)
 
-const goToProfile = () => {
-    router.push('/profile/edit')
-}
+const loading = ref(false)
+const posts = ref([])
 
+const page = ref(1)
+const pageSize = ref(10)
 
+const keyword = ref('')
+const sortBy = ref('create_time')
+const order = ref('DESC')
 
 const postDialogVisible = ref(false)
-const sortType = ref('reply') // 默认按最新回复排序
+const postSubmitting = ref(false)
+const postForm = ref({ title: '', content: '' })
 
-const postForm = reactive({
-    title: '',
-    content: ''
-})
+const goToProfile = () => {
+  if (!token) return router.push('/login')
+  router.push('/profile/edit')
+}
 
-const posts = ref([])
-const activeUsers = ref([
-    { avatar: defaultAvatar, name: '不愿透露姓名的小A', count: 15 },
-    { avatar: defaultAvatar, name: '急诊科-李护士', count: 12 },
-    { avatar: defaultAvatar, name: 'ICU-王主任', count: 9 },
-    { avatar: defaultAvatar, name: '我要努力工作', count: 7 },
-    { avatar: defaultAvatar, name: '外科-刘医生', count: 5 },
-])
+const goDetail = (id) => router.push(`/post/${id}`)
+
+const formatTime = (t) => {
+  if (!t) return ''
+  const d = new Date(t)
+  if (isNaN(d.getTime())) return String(t)
+  return d.toLocaleString()
+}
+
+const loadMe = async () => {
+  if (!token) return
+  try {
+    me.value = await getMeService()
+    localStorage.setItem('user', JSON.stringify(me.value))
+  } catch (e) {
+    // token 失效
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+}
+
+const loadPosts = async () => {
+  loading.value = true
+  try {
+    posts.value = await getAllpostsService({
+      page: page.value,
+      pageSize: pageSize.value,
+      sortBy: sortBy.value,
+      order: order.value,
+      keyword: keyword.value
+    })
+  } catch (e) {
+    ElMessage.error(e?.message || '加载帖子失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const reload = () => {
+  page.value = 1
+  loadPosts()
+}
+
+const onPageChange = (p) => {
+  page.value = p
+  loadPosts()
+}
 
 const openPostDialog = () => {
-    // 只有在用户已登录时才直接打开发布对话框
-    const token = localStorage.getItem('token')
-    if (!token) {
-        ElMessage.warning('发布主题需要登录，请先登录')
-        router.push('/login')
-        return
-    }
-
-    postDialogVisible.value = true
-    postForm.title = ''
-    postForm.content = ''
+  if (!token) return router.push('/login')
+  postForm.value = { title: '', content: '' }
+  postDialogVisible.value = true
 }
 
-// 获取帖子列表
-const loadPosts = async () => {
-    try {
-        let sortBy = 'reply_count' // 默认按回复数排序
-        let order = 'DESC'
-
-        if (sortType.value === 'publish') {
-            sortBy = 'create_time' // 按创建时间排序
-        }
-
-        console.log('排序依据:', sortBy);
-
-        const res = await postService.getAllpostsService({
-            page: 1,
-            pageSize: 20,
-            sortBy: sortBy,
-            order: order
-        })
-
-        // 处理返回的数据，适配前端展示
-        posts.value = res.data.map(post => ({
-            ...post,
-            excerpt: post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content
-        }))
-    } catch (error) {
-        console.error('获取帖子失败:', error)
-        ElMessage.error('获取帖子失败')
-    }
-}
-
-// 切换排序方式
-const changeSort = (type) => {
-    sortType.value = type
-    loadPosts()
-}
-
-const submitPost = () => {
-    // 再次检查登录状态，防止未登录提交
-    const token = localStorage.getItem('token')
-    if (!token) {
-        ElMessage.warning('发布主题需要登录，请先登录')
-        router.push('/login')
-        return
-    }
-
-    if (!postForm.title || !postForm.content) {
-        ElMessage.warning('请填写标题和内容')
-        return
-    }
-
-    const postPayload = {
-        title: postForm.title,
-        content: postForm.content
-    }
-
-    postService.insertPostService(postPayload).then(() => {
-        loadPosts()
-        // 关闭对话框
-        postDialogVisible.value = false
-        ElMessage.success('发布成功')
-    }).catch((error) => {
-        console.error('发布帖子失败:', error)
-        ElMessage.error('发布帖子失败')
+const submitPost = async () => {
+  if (!postForm.value.title?.trim() || !postForm.value.content?.trim()) {
+    return ElMessage.warning('标题和内容不能为空')
+  }
+  postSubmitting.value = true
+  try {
+    await insertPostService({
+      title: postForm.value.title.trim(),
+      content: postForm.value.content.trim()
     })
+    ElMessage.success('发布成功')
+    postDialogVisible.value = false
+    reload()
+  } catch (e) {
+    ElMessage.error(e?.message || '发布失败')
+  } finally {
+    postSubmitting.value = false
+  }
 }
 
-// 跳转到帖子详情页
-const goToPostDetail = (postId) => {
-    router.push(`/post/${postId}`)
+const toggleLike = async (p) => {
+  if (!token) return
+  try {
+    const res = await togglePostLikeService(p.id)
+    p.liked = !!res.liked
+    p.likeCount = res.likeCount
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
 }
 
-// 组件挂载时加载数据
-onMounted(() => {
-    loadPosts()
-    // 加载当前用户信息（如果有）
-    try {
-        const u = localStorage.getItem('user')
-        currentUser.value = u ? JSON.parse(u) : {}
-    } catch (e) {
-        currentUser.value = {}
-    }
+const toggleFavorite = async (p) => {
+  if (!token) return
+  try {
+    const res = await togglePostFavoriteService(p.id)
+    p.favorited = !!res.favorited
+    ElMessage.success(p.favorited ? '已收藏' : '已取消收藏')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+onMounted(async () => {
+  await loadMe()
+  await loadPosts()
 })
-
-// 格式化时间显示
-const formatTime = (time) => {
-    if (!time) return ''
-    const date = new Date(time)
-    const now = new Date()
-    const diff = now - date
-
-    // 如果是当天发布的，显示小时数
-    if (diff < 24 * 60 * 60 * 1000 && now.getDate() === date.getDate()) {
-        const hours = Math.floor(diff / (60 * 60 * 1000))
-        if (hours > 0) {
-            return `${hours}小时前`
-        } else {
-            const minutes = Math.floor(diff / (60 * 1000))
-            return `${minutes}分钟前`
-        }
-    }
-
-    // 如果是当年发布的，显示月日
-    if (now.getFullYear() === date.getFullYear()) {
-        return `${date.getMonth() + 1}-${date.getDate()}`
-    }
-
-    // 跨年的显示年月日
-    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-}
-
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 12px;
+}
+
 .forum-page {
-    display: flex;
-    gap: 24px;
-    padding: 24px 40px;
-    box-sizing: border-box;
+  display: flex;
+  gap: 16px;
 }
 
 .forum-aside {
-    width: 200px;
-    background: transparent;
+  width: 290px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .user-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-}
-
-.user-card:hover {
-    transform: translateY(-2px)
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  border: 1px solid #eee;
 }
 
 .user-avatar img {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .user-nickname {
-    font-weight: 700
+  font-weight: 600;
 }
 
 .user-action {
-    font-size: 12px;
-    color: #6b7884
+  margin-top: 4px;
+  color: #888;
+  font-size: 12px;
 }
 
 .btn-post {
-    display: block;
-    width: 100%;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    padding: 12px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 18px;
-    transition: all 0.18s ease;
+  border-radius: 10px;
 }
 
-.btn-post:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.12)
+.filters {
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.aside-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.aside-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #5b6b7a;
-    padding: 8px 6px;
-    border-radius: 6px;
-}
-
-.aside-item.active {
-    background: #e9f4ff;
-    color: #0b63d6;
-    box-shadow: 0 1px 0 rgba(11, 99, 214, 0.06);
+.filters .row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .forum-main {
-    flex: 1;
-    background: transparent;
+  flex: 1;
 }
 
-.toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+.post-list-card {
+  border-radius: 12px;
 }
 
-.tabs .tab {
-    background: transparent;
-    border: 1px solid transparent;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #2f4656;
-}
-
-.tabs .tab.active {
-    background: #f0f7ff;
-    border-color: rgba(0, 123, 255, 0.12);
-    color: #0b63d6;
-}
-
-.post-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .post-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    background: #fff;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-    transition: box-shadow 0.18s ease, transform 0.18s ease;
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.post-item:hover {
-    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.06);
-    transform: translateY(-3px)
+.left {
+  flex: 1;
+  cursor: pointer;
 }
 
-.post-avatar img {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
+.title {
+  font-weight: 700;
+  font-size: 16px;
 }
 
-.post-body {
-    flex: 1;
+.meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
 }
 
-.post-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px
+.preview {
+  margin-top: 6px;
+  color: #444;
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
 }
 
-.post-title {
-    margin: 0;
-    font-size: 16px;
-    color: #233642;
-    font-weight: 600;
-    cursor: pointer;
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
 }
 
-.post-title:hover {
-    color: #007bff;
-    text-decoration: underline;
+.empty {
+  padding: 16px;
+  color: #888;
 }
 
-.post-excerpt {
-    margin: 8px 0 0;
-    color: #6b7884
-}
-
-.pin {
-    color: #007bff;
-    margin-right: 6px
-}
-
-.post-right {
-    width: 90px;
-    text-align: center;
-    color: #6b7884
-}
-
-
-.post-right .replies {
-    background: #e6f0ff;
-    color: #007bff;
-    padding: 6px 5px;
-    border-radius: 14px;
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.post-right .publish-time {
-    color: #505050fe;
-    padding: 4px;
-}
-
-
-.forum-right {
-    width: 240px;
-}
-
-.active-card {
-    background: #fff;
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04)
-}
-
-.card-title {
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: #233642
-}
-
-.active-card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0
-}
-
-.active-card li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-    border-top: 1px solid #f3f8ff
-}
-
-.user-dot {
-    width: 36px;
-    height: 36px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 50%
-}
-
-.user-name {
-    flex: 1;
-    font-weight: 600;
-    color: #22333b
-}
-
-.user-count {
-    color: #0b63d6
-}
-
-/* responsive */
-@media (max-width: 900px) {
-    .forum-page {
-        padding: 12px;
-        gap: 12px
-    }
-
-    .forum-aside {
-        display: none
-    }
-
-    .forum-right {
-        display: none
-    }
+.pager {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
 }
 </style>

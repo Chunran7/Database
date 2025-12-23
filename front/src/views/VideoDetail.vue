@@ -1,142 +1,190 @@
 <template>
-    <el-container class="video-detail-container">
-        <!-- 主体内容 -->
-        <el-main class="main">
-            <div class="main-container">
-                <div v-if="video" class="content">
-                    <div class="video-title">{{ video.title }}</div>
-                    <div class="video-info">
-                        <span class="video-time">更新时间: {{ video.createTime }}</span>
-                    </div>
-                    <div class="video-wrapper">
-                        <video class="video-content" controls :src="video.url" :poster="video.cover"></video>
-                    </div>
-
-                </div>
-                <div v-else-if="loading" class="video-title">正在加载...</div>
-                <div v-else class="video-title">视频不存在或已被删除</div>
+  <div class="container">
+    <el-card class="card" v-if="video">
+      <template #header>
+        <div class="header">
+          <div class="left">
+            <div class="title">{{ video.title }}</div>
+            <div class="meta">
+              <el-avatar :src="video.authorPic || defaultAvatar" :size="28" />
+              <span class="author">{{ video.author || '匿名用户' }}</span>
+              <span class="time">{{ formatTime(video.createTime) }}</span>
+              <span class="stat">浏览 {{ video.views || 0 }}</span>
+              <span class="stat">赞 {{ video.likeCount || 0 }}</span>
             </div>
+          </div>
 
-        </el-main>
+          <div class="right">
+            <el-button
+              v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
+              :type="authorProfile.followed ? 'primary' : 'default'"
+              @click="toggleFollowAuthor"
+            >
+              {{ authorProfile.followed ? '已关注' : '关注' }}
+            </el-button>
+          </div>
+        </div>
+      </template>
 
-        <!-- 页脚 -->
-        <Footer />
-    </el-container>
+      <video class="player" controls :poster="video.cover">
+        <source :src="video.url" type="video/mp4" />
+        你的浏览器不支持 video 标签。
+      </video>
+
+      <div v-if="video.description" class="desc">{{ video.description }}</div>
+
+      <div class="actions">
+        <el-button :type="video.liked ? 'primary' : 'default'" :disabled="!token" @click="toggleLike">
+          {{ video.liked ? '已赞' : '点赞' }} ({{ video.likeCount || 0 }})
+        </el-button>
+        <el-button :type="video.favorited ? 'warning' : 'default'" :disabled="!token" @click="toggleFavorite">
+          {{ video.favorited ? '已藏' : '收藏' }}
+        </el-button>
+      </div>
+    </el-card>
+
+    <el-card class="card" v-else>
+      <el-skeleton :rows="8" animated />
+    </el-card>
+  </div>
 </template>
 
 <script setup>
-import Footer from '../components/Footer.vue'
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { marked } from 'marked';
-import { computed } from 'vue';
-import { getVideoByIdService } from '@/api/video.js'; // 导入文章详情服务函数
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import defaultAvatar from '@/assets/default.png'
 
+import { getVideoByIdService, toggleVideoLikeService, toggleVideoFavoriteService } from '@/api/video'
+import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
 
-const route = useRoute();
-const router = useRouter();
-const video = ref(null);
-const loading = ref(true);
+const route = useRoute()
+const router = useRouter()
+const token = localStorage.getItem('token')
+const id = ref(route.params.id)
 
-const renderedContent = computed(() => {
-    if (video.value && video.value.content) {
-        return marked(video.value.content);
-    }
-    return '错误';
-});
+const video = ref(null)
+const me = ref(null)
+const authorProfile = ref(null)
 
-const getvideoDetail = async () => {
-    try {
-        const id = route.params.id;
-        // 使用API服务函数替代直接调用request
-        const res = await getVideoByIdService(id);
-        console.log('后端返回的数据:', res)
-        if (res.code === 0) {
-            console.log('视频数据:', res.data); // 添加这行来查看具体字段
-            video.value = res.data;
-        } else {
-            ElMessage.error(res.msg);
-            // 视频不存在时返回视频列表页
-            setTimeout(() => {
-                router.push('/video');
-            }, 2000);
-        }
-    } catch (err) {
-        console.error('Failed to fetch video detail:', err);
-        ElMessage.error('获取视频详情失败');
-        // 发生错误时返回视频列表页
-        setTimeout(() => {
-            router.push('/video');
-        }, 2000);
-    } finally {
-        loading.value = false;
-    }
+const formatTime = (t) => {
+  if (!t) return ''
+  const d = new Date(t)
+  if (isNaN(d.getTime())) return String(t)
+  return d.toLocaleString()
 }
 
-onMounted(() => {
-    getvideoDetail()
-})
+const goLogin = () => router.push('/login')
 
+const loadMe = async () => {
+  if (!token) return
+  try {
+    me.value = await getMeService()
+  } catch {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+}
+
+const loadVideo = async () => {
+  try {
+    video.value = await getVideoByIdService(id.value)
+    try {
+      authorProfile.value = await getUserProfileService(video.value.userId)
+    } catch (_) {}
+  } catch (e) {
+    ElMessage.error(e?.message || '加载视频失败')
+  }
+}
+
+const toggleLike = async () => {
+  if (!token) return goLogin()
+  try {
+    const res = await toggleVideoLikeService(id.value)
+    video.value.liked = !!res.liked
+    video.value.likeCount = res.likeCount
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+const toggleFavorite = async () => {
+  if (!token) return goLogin()
+  try {
+    const res = await toggleVideoFavoriteService(id.value)
+    video.value.favorited = !!res.favorited
+    ElMessage.success(video.value.favorited ? '已收藏' : '已取消收藏')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+const toggleFollowAuthor = async () => {
+  if (!token) return goLogin()
+  try {
+    authorProfile.value = await toggleFollowService(video.value.userId)
+    ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败')
+  }
+}
+
+onMounted(async () => {
+  await loadMe()
+  await loadVideo()
+})
 </script>
 
 <style scoped>
-.video-detail-container {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 12px;
 }
 
-.main {
-    border: 10cm;
-    background-color: #f3f3f3;
-    flex: 1;
-    padding: 20px 0;
+.card {
+  border-radius: 12px;
 }
 
-.main-container {
-    width: 60%;
-    min-height: 60vh;
-    background-color: #ffffff;
-    margin: 30px auto;
-    border-radius: 25px;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.content {}
-
-
-.video-title {
-    text-align: center;
-    font-size: 30px;
-    padding: 40px 0 10px 0;
+.title {
+  font-size: 18px;
+  font-weight: 800;
 }
 
-.video-wrapper {
-    width: 80%;
-    margin: 0 auto;
-    padding: 50px 0 100px 0;
-    /* 居中 wrapper */
-    display: flex;
-    justify-content: center;
-    /* 视频居中 */
+.meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #666;
 }
 
-.video-content {
-    width: 100%;
-    height: auto;
-    max-width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.player {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
 }
 
-.video-info {
-    text-align: center;
-    color: #888;
-    margin-bottom: 20px;
+.desc {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7f7f7;
+  color: #666;
 }
 
-
-.video-time {
-    margin-left: 20px;
+.actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
 }
 </style>
