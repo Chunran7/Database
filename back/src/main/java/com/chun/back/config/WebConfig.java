@@ -37,7 +37,8 @@ public class WebConfig implements WebMvcConfigurer {
 
                         "/error",
                         "/static/**",
-                        "/favicon.ico"
+                        "/favicon.ico",
+                        "/admin/**"
                 );
     }
 }
