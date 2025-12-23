@@ -57,7 +57,9 @@ import { getMeService, getUserProfileService, toggleFollowService } from '@/api/
 
 const route = useRoute()
 const router = useRouter()
-const token = localStorage.getItem('token')
+const token = ref(localStorage.getItem('token'))
+const refreshToken = () => { token.value = localStorage.getItem('token') }
+const hasToken = () => { refreshToken(); return !!token.value }
 const id = ref(route.params.id)
 
 const article = ref(null)
@@ -74,13 +76,10 @@ const formatTime = (t) => {
 const goLogin = () => router.push('/login')
 
 const loadMe = async () => {
-  if (!token) return
+  if (!hasToken()) return
   try {
     me.value = await getMeService()
-  } catch {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-  }
+  } catch {}
 }
 
 const loadArticle = async () => {
@@ -95,7 +94,7 @@ const loadArticle = async () => {
 }
 
 const toggleLike = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     const res = await toggleArticleLikeService(id.value)
     article.value.liked = !!res.liked
@@ -106,7 +105,7 @@ const toggleLike = async () => {
 }
 
 const toggleFavorite = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     const res = await toggleArticleFavoriteService(id.value)
     article.value.favorited = !!res.favorited
@@ -117,7 +116,7 @@ const toggleFavorite = async () => {
 }
 
 const toggleFollowAuthor = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     authorProfile.value = await toggleFollowService(article.value.userId)
     ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')

@@ -15,8 +15,8 @@ public interface CommentMapper {
                u.user_pic AS author_pic,
                COALESCE(ru.nickname, ru.username) AS reply_user_name
         FROM comment c
-        LEFT JOIN users u ON c.user_id = u.id
-        LEFT JOIN users ru ON c.reply_user_id = ru.id
+        LEFT JOIN `user` u ON c.user_id = u.id
+        LEFT JOIN `user` ru ON c.reply_user_id = ru.id
         WHERE c.post_id = #{postId}
         ORDER BY c.create_time ASC, c.id ASC
         """)

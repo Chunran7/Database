@@ -92,7 +92,7 @@ const getArticleLatest = async () => {
     try {
         loading.value = true
         const res = await getArticleLatestService(6)
-        articles.value = res.data || []
+        articles.value = res || []
     } catch (error) {
         console.error('获取最新文章失败:', error)
         articles.value = []
@@ -102,7 +102,7 @@ const getVideoLatest = async () => {
     try {
         loading.value = true
         const res = await getVideoLatestService(8)
-        videos.value = res.data || []
+        videos.value = res || []
     } catch (error) {
         console.error('获取视频列表失败:', error)
         videos.value = []

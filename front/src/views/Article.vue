@@ -53,8 +53,8 @@ const currentPage = ref(1)
 const getArticleList = async () => {
   try {
     loading.value = true
-    const res = await getArticleListService()
-    articles.value = res.data
+    const list = await getArticleListService()
+    articles.value = list || []
   } catch (error) {
     console.error('获取文章列表失败:', error)
     // 模拟数据用于演示

@@ -53,8 +53,8 @@ const currentPage = ref(1)
 const getVideoList = async () => {
   try {
     loading.value = true
-    const res = await getVideoListService()
-    videos.value = res.data
+    const list = await getVideoListService()
+    videos.value = list || []
   } catch (error) {
     console.error('获取视频列表失败:', error)
     // 模拟数据用于演示

@@ -14,7 +14,7 @@ public interface VideoMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
-        LEFT JOIN users u ON v.user_id = u.id
+        LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.id = #{id} AND v.is_deleted = 0
         """)
     Video selectByIdWithAuthor(Long id);
@@ -25,7 +25,7 @@ public interface VideoMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
-        LEFT JOIN users u ON v.user_id = u.id
+        LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.is_deleted = 0
           AND (#{keyword} IS NULL OR #{keyword} = '' OR v.title LIKE CONCAT('%', #{keyword}, '%') OR v.description LIKE CONCAT('%', #{keyword}, '%'))
         ORDER BY ${sortBy} ${order}
@@ -39,7 +39,7 @@ public interface VideoMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
-        LEFT JOIN users u ON v.user_id = u.id
+        LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.is_deleted = 0
         ORDER BY v.create_time DESC
         LIMIT #{count}

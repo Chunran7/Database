@@ -105,7 +105,9 @@ import { getMeService, getUserProfileService, toggleFollowService } from '@/api/
 
 const route = useRoute()
 const router = useRouter()
-const token = localStorage.getItem('token')
+const token = ref(localStorage.getItem('token'))
+const refreshToken = () => { token.value = localStorage.getItem('token') }
+const hasToken = () => { refreshToken(); return !!token.value }
 
 const id = ref(route.params.id)
 const post = ref(null)
@@ -128,13 +130,10 @@ const formatTime = (t) => {
 const goLogin = () => router.push('/login')
 
 const loadMe = async () => {
-  if (!token) return
+  if (!hasToken()) return
   try {
     me.value = await getMeService()
-  } catch (e) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-  }
+  } catch (e) {}
 }
 
 const loadPost = async () => {
@@ -161,7 +160,7 @@ const loadComments = async () => {
 }
 
 const onReply = (node) => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   replyTarget.value = node
 }
 
@@ -170,7 +169,7 @@ const cancelReply = () => {
 }
 
 const submitComment = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   const content = commentContent.value.trim()
   if (!content) return ElMessage.warning('评论不能为空')
 
@@ -195,7 +194,7 @@ const submitComment = async () => {
 }
 
 const onDelete = async (node) => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     await ElMessageBox.confirm('确认删除这条评论吗？删除后会显示“已删除”占位。', '提示', {
       type: 'warning',
@@ -217,7 +216,7 @@ const onDelete = async (node) => {
 }
 
 const toggleLike = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     const res = await togglePostLikeService(id.value)
     post.value.liked = !!res.liked
@@ -228,7 +227,7 @@ const toggleLike = async () => {
 }
 
 const toggleFavorite = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     const res = await togglePostFavoriteService(id.value)
     post.value.favorited = !!res.favorited
@@ -239,7 +238,7 @@ const toggleFavorite = async () => {
 }
 
 const toggleFollowAuthor = async () => {
-  if (!token) return goLogin()
+  if (!hasToken()) return goLogin()
   try {
     authorProfile.value = await toggleFollowService(post.value.userId)
     ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')

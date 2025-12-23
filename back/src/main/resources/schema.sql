@@ -5,11 +5,11 @@
 -- =========================================================
 
 -- 0. Create DB
-CREATE DATABASE IF NOT EXISTS `DBproject`
+CREATE DATABASE IF NOT EXISTS `dbproject`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
-USE `DBproject`;
+USE `dbproject`;
 
 -- 为了方便重建（尤其是有外键时）
 SET FOREIGN_KEY_CHECKS = 0;
@@ -17,11 +17,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- =========================================================
 -- 1) Users
 -- =========================================================
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE `users` (
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `username` VARCHAR(50) NOT NULL COMMENT '用户名',
-  `password_hash` VARCHAR(255) NOT NULL COMMENT '密码哈希(推荐bcrypt/argon2等)',
+  `password` VARCHAR(255) NOT NULL COMMENT '密码(建议哈希存储)',
   `nickname` VARCHAR(50) DEFAULT NULL COMMENT '昵称',
   `email` VARCHAR(128) DEFAULT NULL COMMENT '邮箱',
   `user_pic` VARCHAR(255) DEFAULT NULL COMMENT '用户头像地址',
@@ -29,9 +29,9 @@ CREATE TABLE `users` (
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_users_username` (`username`),
-  UNIQUE KEY `uk_users_email` (`email`),
-  CONSTRAINT `ck_users_status` CHECK (`status` IN (0, 1))
+  UNIQUE KEY `uk_user_username` (`username`),
+  UNIQUE KEY `uk_user_email` (`email`),
+  CONSTRAINT `ck_user_status` CHECK (`status` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 -- =========================================================
@@ -55,7 +55,7 @@ CREATE TABLE `article` (
   KEY `idx_article_user_time` (`user_id`, `create_time`),
   KEY `idx_article_time` (`create_time`),
   CONSTRAINT `fk_article_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `ck_article_is_deleted` CHECK (`is_deleted` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章表';
@@ -79,7 +79,7 @@ CREATE TABLE `post` (
   KEY `idx_post_user_time` (`user_id`, `create_time`),
   KEY `idx_post_time` (`create_time`),
   CONSTRAINT `fk_post_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `ck_post_is_deleted` CHECK (`is_deleted` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='帖子表';
@@ -106,10 +106,10 @@ CREATE TABLE `comment` (
     FOREIGN KEY (`post_id`) REFERENCES `post` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_comment_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_comment_reply_user`
-    FOREIGN KEY (`reply_user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`reply_user_id`) REFERENCES `user` (`id`)
     ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `ck_comment_is_deleted` CHECK (`is_deleted` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评论表';
@@ -135,7 +135,7 @@ CREATE TABLE `video` (
   KEY `idx_video_user_time` (`user_id`, `create_time`),
   KEY `idx_video_time` (`create_time`),
   CONSTRAINT `fk_video_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `ck_video_is_deleted` CHECK (`is_deleted` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频表';
@@ -156,7 +156,7 @@ CREATE TABLE `post_like` (
     FOREIGN KEY (`post_id`) REFERENCES `post` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_post_like_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='帖子点赞表';
 
@@ -176,7 +176,7 @@ CREATE TABLE `post_favorite` (
     FOREIGN KEY (`post_id`) REFERENCES `post` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_post_favorite_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='帖子收藏表';
 
@@ -196,7 +196,7 @@ CREATE TABLE `article_like` (
     FOREIGN KEY (`article_id`) REFERENCES `article` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_article_like_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章点赞表';
 
@@ -216,7 +216,7 @@ CREATE TABLE `article_favorite` (
     FOREIGN KEY (`article_id`) REFERENCES `article` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_article_favorite_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章收藏表';
 
@@ -236,7 +236,7 @@ CREATE TABLE `video_like` (
     FOREIGN KEY (`video_id`) REFERENCES `video` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_video_like_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频点赞表';
 
@@ -256,7 +256,7 @@ CREATE TABLE `video_favorite` (
     FOREIGN KEY (`video_id`) REFERENCES `video` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_video_favorite_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频收藏表';
 
@@ -273,10 +273,10 @@ CREATE TABLE `user_follow` (
   UNIQUE KEY `uk_user_follow` (`follower_id`, `followee_id`),
   KEY `idx_followee_time` (`followee_id`, `create_time`),
   CONSTRAINT `fk_follow_follower`
-    FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`follower_id`) REFERENCES `user` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_follow_followee`
-    FOREIGN KEY (`followee_id`) REFERENCES `users` (`id`)
+    FOREIGN KEY (`followee_id`) REFERENCES `user` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关注表';
 

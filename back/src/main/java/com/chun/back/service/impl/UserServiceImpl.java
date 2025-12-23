@@ -5,6 +5,7 @@ import com.chun.back.mapper.UserMapper;
 import com.chun.back.pojo.User;
 import com.chun.back.service.UserService;
 import com.chun.back.utils.Md5Util;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,15 @@ public class UserServiceImpl implements UserService {
         User u = new User();
         u.setUsername(username);
         u.setPasswordHash(md5);
-        userMapper.insert(u);
+        try {
+            int rows = userMapper.insert(u);
+            if (rows != 1) {
+                throw new RuntimeException("注册失败");
+            }
+        } catch (DuplicateKeyException e) {
+            // 并发下的兜底：即使 Controller 做了查重，也可能被并发插入打穿
+            throw new RuntimeException("用户名已存在");
+        }
     }
 
     @Override

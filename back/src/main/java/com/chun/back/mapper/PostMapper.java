@@ -13,7 +13,7 @@ public interface PostMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM post p
-        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN `user` u ON p.user_id = u.id
         WHERE p.id = #{id} AND p.is_deleted = 0
         """)
     Post selectByIdWithAuthor(Long id);
@@ -23,7 +23,7 @@ public interface PostMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM post p
-        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN `user` u ON p.user_id = u.id
         WHERE p.is_deleted = 0
           AND (#{keyword} IS NULL OR #{keyword} = '' OR p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%'))
         ORDER BY ${sortBy} ${order}

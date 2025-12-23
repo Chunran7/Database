@@ -14,7 +14,7 @@ public interface ArticleMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
-        LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.id = #{id} AND a.is_deleted = 0
         """)
     Article selectByIdWithAuthor(Long id);
@@ -25,7 +25,7 @@ public interface ArticleMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
-        LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.is_deleted = 0
           AND (#{keyword} IS NULL OR #{keyword} = '' OR a.title LIKE CONCAT('%', #{keyword}, '%') OR a.description LIKE CONCAT('%', #{keyword}, '%'))
         ORDER BY ${sortBy} ${order}
@@ -39,7 +39,7 @@ public interface ArticleMapper {
                COALESCE(u.nickname, u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
-        LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.is_deleted = 0
         ORDER BY a.create_time DESC
         LIMIT #{count}

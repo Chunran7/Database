@@ -43,10 +43,20 @@ public class UserController {
 
     @PostMapping("/register")
     public Result register(@RequestParam String username, @RequestParam String password) {
+        // 基础校验：避免空参导致数据库异常/脏数据
+        if (username == null || username.isBlank()) {
+            return Result.error("用户名不能为空");
+        }
+        if (password == null || password.isBlank()) {
+            return Result.error("密码不能为空");
+        }
+        username = username.trim();
+
         User exist = userService.findByUserName(username);
         if (exist != null) {
             return Result.error("用户名已存在");
         }
+        // register 内部会对插入结果进行判断，失败会抛出异常并由全局异常处理器返回 msg
         userService.register(username, password);
         return Result.success();
     }

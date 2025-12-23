@@ -126,7 +126,8 @@ import {
 
 const router = useRouter()
 
-const token = localStorage.getItem('token')
+const token = ref(localStorage.getItem('token'))
+const refreshToken = () => { token.value = localStorage.getItem('token') }
 const me = ref(null)
 
 const loading = ref(false)
@@ -144,7 +145,8 @@ const postSubmitting = ref(false)
 const postForm = ref({ title: '', content: '' })
 
 const goToProfile = () => {
-  if (!token) return router.push('/login')
+  refreshToken()
+  if (!token.value) return router.push('/login')
   router.push('/profile/edit')
 }
 
@@ -158,14 +160,13 @@ const formatTime = (t) => {
 }
 
 const loadMe = async () => {
-  if (!token) return
+  refreshToken()
+  if (!token.value) return
   try {
     me.value = await getMeService()
     localStorage.setItem('user', JSON.stringify(me.value))
   } catch (e) {
-    // token 失效
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    // 交给 request.js 的 401 统一处理，这里不手动清 token
   }
 }
 
@@ -197,7 +198,8 @@ const onPageChange = (p) => {
 }
 
 const openPostDialog = () => {
-  if (!token) return router.push('/login')
+  refreshToken()
+  if (!token.value) return router.push('/login')
   postForm.value = { title: '', content: '' }
   postDialogVisible.value = true
 }
@@ -223,7 +225,8 @@ const submitPost = async () => {
 }
 
 const toggleLike = async (p) => {
-  if (!token) return
+  refreshToken()
+  if (!token.value) return
   try {
     const res = await togglePostLikeService(p.id)
     p.liked = !!res.liked
@@ -234,7 +237,8 @@ const toggleLike = async (p) => {
 }
 
 const toggleFavorite = async (p) => {
-  if (!token) return
+  refreshToken()
+  if (!token.value) return
   try {
     const res = await togglePostFavoriteService(p.id)
     p.favorited = !!res.favorited
@@ -245,6 +249,7 @@ const toggleFavorite = async (p) => {
 }
 
 onMounted(async () => {
+  refreshToken()
   await loadMe()
   await loadPosts()
 })

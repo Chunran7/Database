@@ -50,14 +50,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
 
 import { getMeService, updateProfileService } from '@/api/user'
 
 const router = useRouter()
-const token = localStorage.getItem('token')
+const route = useRoute()
 
 const me = ref(null)
 const loading = ref(false)
@@ -69,21 +69,25 @@ const form = ref({
   userPic: ''
 })
 
-const goLogin = () => router.push('/login')
+const requireLogin = () => {
+  const redirect = encodeURIComponent(route.fullPath)
+  router.replace(`/login?redirect=${redirect}`)
+}
 
 const loadMe = async () => {
-  if (!token) return goLogin()
+  const token = localStorage.getItem('token')
+  if (!token) return requireLogin()
+
   loading.value = true
   try {
     me.value = await getMeService()
     localStorage.setItem('user', JSON.stringify(me.value))
-    form.value.nickname = me.value.nickname || ''
-    form.value.email = me.value.email || ''
-    form.value.userPic = me.value.userPic || ''
+    form.value.nickname = me.value?.nickname || ''
+    form.value.email = me.value?.email || ''
+    form.value.userPic = me.value?.userPic || ''
   } catch (e) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    goLogin()
+    // 401 会被 request.js 统一处理并跳转，这里只做兜底提示
+    ElMessage.error(e?.message || '获取用户信息失败')
   } finally {
     loading.value = false
   }
@@ -112,7 +116,7 @@ const logout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
   ElMessage.success('已退出')
-  router.push('/login')
+  requireLogin()
 }
 
 onMounted(loadMe)
