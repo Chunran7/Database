@@ -7,10 +7,14 @@ import com.chun.back.utils.JwtUtil;
 import com.chun.back.utils.Md5Util;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
@@ -110,5 +114,57 @@ public class UserController {
         Long followerId = getLoginUserId(request);
         User profile = userService.toggleFollow(followerId, id);
         return Result.success(profile);
+    }
+
+    /**
+     * 我关注的人列表（需要登录）
+     */
+    @GetMapping("/following")
+    public Result following(HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(userService.listFollowing(userId));
+    }
+
+    /**
+     * 上传头像（需要登录）
+     * 前端：multipart/form-data，字段名 file
+     */
+    @PostMapping(value = "/avatar/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        if (file == null || file.isEmpty()) {
+            return Result.error("请选择要上传的头像文件");
+        }
+
+        String original = file.getOriginalFilename();
+        String ext = "";
+        if (original != null && original.contains(".")) {
+            ext = original.substring(original.lastIndexOf('.')).toLowerCase();
+        }
+        if (!(".png".equals(ext) || ".jpg".equals(ext) || ".jpeg".equals(ext) || ".gif".equals(ext) || ".webp".equals(ext))) {
+            return Result.error("仅支持 png/jpg/jpeg/gif/webp 格式");
+        }
+        if (file.getSize() > 5L * 1024 * 1024) {
+            return Result.error("文件过大（最大 5MB）");
+        }
+
+        String filename = userId + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
+        String userDir = System.getProperty("user.dir");
+        File dir = new File(userDir, "uploads/avatars");
+        if (!dir.exists() && !dir.mkdirs()) {
+            return Result.error("创建上传目录失败");
+        }
+        try {
+            File dest = new File(dir, filename);
+            file.transferTo(dest);
+        } catch (Exception e) {
+            return Result.error("上传失败：" + e.getMessage());
+        }
+
+        String url = "/api/uploads/avatars/" + filename;
+        userService.updateAvatar(userId, url);
+        Map<String, Object> res = new HashMap<>();
+        res.put("url", url);
+        return Result.success(res);
     }
 }

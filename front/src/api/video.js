@@ -16,3 +16,9 @@ export const toggleVideoLikeService = (id) => request.post(`/video/${id}/like/to
 
 // 收藏 / 取消收藏（需要登录）
 export const toggleVideoFavoriteService = (id) => request.post(`/video/${id}/favorite/toggle`);
+
+// 我点赞的视频
+export const getMyLikedVideosService = () => request.get('/video/me/liked')
+
+// 我收藏的视频
+export const getMyFavoritedVideosService = () => request.get('/video/me/favorited')

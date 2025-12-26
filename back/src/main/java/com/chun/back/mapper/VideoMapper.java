@@ -56,4 +56,32 @@ public interface VideoMapper {
 
     @Update("UPDATE video SET like_count = #{likeCount} WHERE id = #{videoId} AND is_deleted=0")
     int updateLikeCount(Long videoId, Integer likeCount);
+
+    // ------------------- 我的点赞/收藏 -------------------
+
+    @Select("""
+        SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
+               v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
+               COALESCE(u.nickname, u.username) AS author,
+               u.user_pic AS author_pic
+        FROM video_like vl
+        JOIN video v ON vl.video_id = v.id
+        LEFT JOIN `user` u ON v.user_id = u.id
+        WHERE vl.user_id = #{userId} AND v.is_deleted = 0
+        ORDER BY vl.create_time DESC, vl.id DESC
+        """)
+    List<Video> listLikedByUser(Long userId);
+
+    @Select("""
+        SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
+               v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
+               COALESCE(u.nickname, u.username) AS author,
+               u.user_pic AS author_pic
+        FROM video_favorite vf
+        JOIN video v ON vf.video_id = v.id
+        LEFT JOIN `user` u ON v.user_id = u.id
+        WHERE vf.user_id = #{userId} AND v.is_deleted = 0
+        ORDER BY vf.create_time DESC, vf.id DESC
+        """)
+    List<Video> listFavoritedByUser(Long userId);
 }

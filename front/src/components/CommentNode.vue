@@ -18,7 +18,8 @@
       </div>
     </div>
 
-    <div v-if="node.replies && node.replies.length" class="children">
+    <!-- 只展示两层：根评论 + 所有回复统一放在第二层 -->
+    <div v-if="depth === 0 && node.replies && node.replies.length" class="children">
       <CommentNode
         v-for="child in node.replies"
         :key="child.id"

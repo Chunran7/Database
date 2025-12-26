@@ -196,7 +196,7 @@ const submitComment = async () => {
 const onDelete = async (node) => {
   if (!hasToken()) return goLogin()
   try {
-    await ElMessageBox.confirm('确认删除这条评论吗？删除后会显示“已删除”占位。', '提示', {
+    await ElMessageBox.confirm('确认删除这条评论吗？删除后将直接隐藏（若删除的是一级评论，其下所有回复也会隐藏）。', '提示', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

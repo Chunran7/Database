@@ -76,6 +76,45 @@ public class PostController {
         return Result.success(id);
     }
 
+    // ------------------- 我的帖子管理 -------------------
+
+    @GetMapping("/me/list")
+    public Result myList(HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(postService.myList(userId));
+    }
+
+    @PutMapping("/me/{id}")
+    public Result updateMy(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        String title = body.get("title");
+        String content = body.get("content");
+        if (title == null || title.isBlank() || content == null || content.isBlank()) {
+            return Result.error("标题和内容不能为空");
+        }
+        boolean ok = postService.updateMyPost(userId, id, title, content);
+        return ok ? Result.success() : Result.error("更新失败（不存在或无权限）");
+    }
+
+    @DeleteMapping("/me/{id}")
+    public Result deleteMy(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        boolean ok = postService.deleteMyPost(userId, id);
+        return ok ? Result.success() : Result.error("删除失败（不存在或无权限）");
+    }
+
+    @GetMapping("/me/liked")
+    public Result myLiked(HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(postService.myLiked(userId));
+    }
+
+    @GetMapping("/me/favorited")
+    public Result myFavorited(HttpServletRequest request) {
+        Long userId = getLoginUserId(request);
+        return Result.success(postService.myFavorited(userId));
+    }
+
     @GetMapping("/{id}/comments")
     public Result comments(@PathVariable Long id) {
         return Result.success(commentService.listTree(id));

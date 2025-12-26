@@ -18,7 +18,7 @@ public class Comment {
     private Integer isDeleted;
     private LocalDateTime createTime;
 
-    // 扩展字段（查询 join users）
+    // 扩展字段（查询 join `user`）
     private String author;
     private String authorPic;
     private String replyUserName;

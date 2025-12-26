@@ -9,6 +9,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -75,6 +77,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateAvatar(Long userId, String userPic) {
+        userMapper.updateAvatar(userId, userPic);
+    }
+
+    @Override
     public User toggleFollow(Long followerId, Long followingId) {
         if (followerId.equals(followingId)) {
             return getProfile(followingId, followerId);
@@ -86,5 +93,17 @@ public class UserServiceImpl implements UserService {
             userFollowMapper.insert(followerId, followingId);
         }
         return getProfile(followingId, followerId);
+    }
+
+    @Override
+    public List<User> listFollowing(Long userId) {
+        List<User> list = userMapper.listFollowing(userId);
+        // viewer 就是 userId 本人，followed 恒为 true
+        if (list != null) {
+            for (User u : list) {
+                u.setFollowed(true);
+            }
+        }
+        return list;
     }
 }

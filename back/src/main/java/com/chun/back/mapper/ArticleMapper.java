@@ -56,4 +56,32 @@ public interface ArticleMapper {
 
     @Update("UPDATE article SET like_count = #{likeCount} WHERE id = #{articleId} AND is_deleted=0")
     int updateLikeCount(Long articleId, Integer likeCount);
+
+    // ------------------- 我的点赞/收藏 -------------------
+
+    @Select("""
+        SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
+               a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
+               COALESCE(u.nickname, u.username) AS author,
+               u.user_pic AS author_pic
+        FROM article_like al
+        JOIN article a ON al.article_id = a.id
+        LEFT JOIN `user` u ON a.user_id = u.id
+        WHERE al.user_id = #{userId} AND a.is_deleted = 0
+        ORDER BY al.create_time DESC, al.id DESC
+        """)
+    List<Article> listLikedByUser(Long userId);
+
+    @Select("""
+        SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
+               a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
+               COALESCE(u.nickname, u.username) AS author,
+               u.user_pic AS author_pic
+        FROM article_favorite af
+        JOIN article a ON af.article_id = a.id
+        LEFT JOIN `user` u ON a.user_id = u.id
+        WHERE af.user_id = #{userId} AND a.is_deleted = 0
+        ORDER BY af.create_time DESC, af.id DESC
+        """)
+    List<Article> listFavoritedByUser(Long userId);
 }

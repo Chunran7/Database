@@ -16,3 +16,9 @@ export const toggleArticleLikeService = (id) => request.post(`/article/${id}/lik
 
 // 收藏 / 取消收藏（需要登录）
 export const toggleArticleFavoriteService = (id) => request.post(`/article/${id}/favorite/toggle`);
+
+// 我点赞的文章
+export const getMyLikedArticlesService = () => request.get('/article/me/liked')
+
+// 我收藏的文章
+export const getMyFavoritedArticlesService = () => request.get('/article/me/favorited')

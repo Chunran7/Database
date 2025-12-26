@@ -105,6 +105,26 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
+    public List<Video> myLiked(Long userId) {
+        List<Video> list = videoMapper.listLikedByUser(userId);
+        for (Video v : list) {
+            v.setLiked(true);
+            v.setFavorited(videoFavoriteMapper.exists(v.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
+    public List<Video> myFavorited(Long userId) {
+        List<Video> list = videoMapper.listFavoritedByUser(userId);
+        for (Video v : list) {
+            v.setFavorited(true);
+            v.setLiked(videoLikeMapper.exists(v.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
     public Map<String, Object> toggleLike(Long videoId, Long userId) {
         boolean existed = videoLikeMapper.exists(videoId, userId) > 0;
         if (existed) {
