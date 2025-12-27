@@ -68,6 +68,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateProfile(Long userId, String nickname, String email, String userPic) {
+        // 允许邮箱/昵称为空：空字符串会导致
+        // 1) 列表 author 的 COALESCE 被空昵称截断（显示成“匿名用户”）
+        // 2) user.email 的唯一索引在多用户都填空字符串时冲突
+        if (nickname != null && nickname.trim().isEmpty()) nickname = null;
+        if (email != null && email.trim().isEmpty()) email = null;
+        if (userPic != null && userPic.trim().isEmpty()) userPic = null;
         User u = new User();
         u.setId(userId);
         u.setNickname(nickname);

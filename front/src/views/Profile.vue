@@ -13,7 +13,7 @@
         <el-tab-pane label="个人资料" name="profile">
           <div class="profile-row">
             <div class="avatar-box">
-              <el-avatar :src="form.userPic || defaultAvatar" :size="88" />
+              <el-avatar :src="normalizePic(form.userPic) || defaultAvatar" :size="88" />
               <div class="avatar-actions">
                 <el-upload
                   :show-file-list="false"
@@ -59,11 +59,11 @@
             <el-table-column label="标题" prop="title" min-width="220" show-overflow-tooltip />
             <el-table-column label="回复" prop="replyCount" width="80" />
             <el-table-column label="点赞" prop="likeCount" width="80" />
-            <el-table-column label="创建" width="170">
-              <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
-            </el-table-column>
-            <el-table-column label="更新" width="170">
-              <template #default="{ row }">{{ formatTime(row.updateTime) }}</template>
+            <el-table-column label="时间" width="220">
+              <template #default="{ row }">
+                <span v-if="isEditedPost(row)">编辑于 {{ formatTime(row.updateTime) }}</span>
+                <span v-else>{{ formatTime(row.createTime) }}</span>
+              </template>
             </el-table-column>
             <el-table-column label="操作" width="220" fixed="right">
               <template #default="{ row }">
@@ -83,7 +83,7 @@
             <el-table-column label="用户" min-width="240">
               <template #default="{ row }">
                 <div class="usercell">
-                  <el-avatar :src="row.userPic || defaultAvatar" :size="32" />
+                  <el-avatar :src="normalizePic(row.userPic) || defaultAvatar" :size="32" />
                   <div class="uinfo">
                     <div class="uname">{{ row.nickname || row.username }}</div>
                     <div class="uid">{{ row.username }}</div>
@@ -200,7 +200,6 @@
 
     <!-- 编辑帖子弹窗 -->
     <el-dialog v-model="editDialogVisible" title="编辑帖子" width="680px">
-      <div class="edit-tip">编辑于 {{ editNow }}</div>
       <el-form :model="editForm" label-width="70px">
         <el-form-item label="标题">
           <el-input v-model="editForm.title" placeholder="请输入标题" />
@@ -218,7 +217,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 
@@ -269,7 +268,6 @@ const loadingFavVideos = ref(false)
 const editDialogVisible = ref(false)
 const editForm = reactive({ id: null, title: '', content: '' })
 const savingPost = ref(false)
-const editNow = computed(() => new Date().toLocaleString())
 
 const formatTime = (t) => {
   if (!t) return ''
@@ -278,8 +276,38 @@ const formatTime = (t) => {
   return d.toLocaleString()
 }
 
+// 只要编辑过，就显示“编辑于 ...”；否则显示发表时间
+// 后端：create_time / update_time
+const isEditedPost = (row) => {
+  if (!row) return false
+  const ct = row.createTime
+  const ut = row.updateTime
+  if (!ct || !ut) return false
+
+  const cd = new Date(ct)
+  const ud = new Date(ut)
+  const cm = isNaN(cd.getTime()) ? null : cd.getTime()
+  const um = isNaN(ud.getTime()) ? null : ud.getTime()
+
+  // 解析成功：用毫秒差判断（避免字符串格式差异）
+  if (cm !== null && um !== null) return Math.abs(um - cm) > 1000
+
+  // 解析失败：退化为字符串比较
+  return String(ct) !== String(ut)
+}
+
+const normalizePic = (raw) => {
+  if (!raw) return ''
+  if (typeof raw !== 'string') return ''
+  if (raw.startsWith('http')) return raw
+  // 兼容：后端返回 /uploads/... 或 /api/uploads/...
+  if (raw.startsWith('/api/')) return raw
+  if (raw.startsWith('/uploads/')) return `/api${raw}`
+  return raw
+}
+
 const refreshMe = async () => {
-  const { data } = await getMeService()
+  const data = await getMeService()
   Object.assign(me, data || {})
   form.username = me.username || ''
   form.nickname = me.nickname || ''
@@ -290,7 +318,7 @@ const refreshMe = async () => {
 const refreshFollowing = async () => {
   loadingFollowing.value = true
   try {
-    const { data } = await getFollowingService()
+    const data = await getFollowingService()
     following.value = Array.isArray(data) ? data : []
   } finally {
     loadingFollowing.value = false
@@ -300,7 +328,7 @@ const refreshFollowing = async () => {
 const refreshMyPosts = async () => {
   loadingMyPosts.value = true
   try {
-    const { data } = await getMyPostsService()
+    const data = await getMyPostsService()
     myPosts.value = Array.isArray(data) ? data : []
   } finally {
     loadingMyPosts.value = false
@@ -313,9 +341,9 @@ const refreshLikes = async () => {
   loadingLikedVideos.value = true
   try {
     const [p, a, v] = await Promise.all([getMyLikedPostsService(), getMyLikedArticlesService(), getMyLikedVideosService()])
-    likedPosts.value = Array.isArray(p.data) ? p.data : []
-    likedArticles.value = Array.isArray(a.data) ? a.data : []
-    likedVideos.value = Array.isArray(v.data) ? v.data : []
+    likedPosts.value = Array.isArray(p) ? p : []
+    likedArticles.value = Array.isArray(a) ? a : []
+    likedVideos.value = Array.isArray(v) ? v : []
   } finally {
     loadingLikedPosts.value = false
     loadingLikedArticles.value = false
@@ -329,9 +357,9 @@ const refreshFavorites = async () => {
   loadingFavVideos.value = true
   try {
     const [p, a, v] = await Promise.all([getMyFavoritedPostsService(), getMyFavoritedArticlesService(), getMyFavoritedVideosService()])
-    favPosts.value = Array.isArray(p.data) ? p.data : []
-    favArticles.value = Array.isArray(a.data) ? a.data : []
-    favVideos.value = Array.isArray(v.data) ? v.data : []
+    favPosts.value = Array.isArray(p) ? p : []
+    favArticles.value = Array.isArray(a) ? a : []
+    favVideos.value = Array.isArray(v) ? v : []
   } finally {
     loadingFavPosts.value = false
     loadingFavArticles.value = false
@@ -367,7 +395,16 @@ const onTabChange = async (name) => {
 const saveProfile = async () => {
   savingProfile.value = true
   try {
-    await updateProfileService({ nickname: form.nickname, email: form.email, userPic: form.userPic })
+    // 重要：空字符串不要写入数据库（否则 author 的 COALESCE 会被空昵称截断；邮箱也会触发唯一索引冲突）
+    const nickname = (form.nickname || '').trim()
+    const email = (form.email || '').trim()
+    const userPic = (form.userPic || '').trim()
+    await updateProfileService({
+
+ickname: nickname ? nickname : null,
+      email: email ? email : null,
+      userPic: userPic ? userPic : null
+    })
     lastSavedAt.value = new Date().toLocaleString()
     ElMessage.success('保存成功')
     await refreshMe()
@@ -394,8 +431,8 @@ const beforeAvatarUpload = (file) => {
 
 const doAvatarUpload = async ({ file }) => {
   try {
-    const { data } = await uploadAvatarService(file)
-    form.userPic = data?.url || ''
+    const res = await uploadAvatarService(file)
+    form.userPic = res?.url || ''
     ElMessage.success('头像上传成功')
     await refreshMe()
   } catch (e) {
@@ -583,9 +620,4 @@ const cancelFavVideo = async (row) => {
   margin-top: 6px;
 }
 
-.edit-tip {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 10px;
-}
 </style>

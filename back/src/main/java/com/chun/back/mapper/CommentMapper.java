@@ -11,9 +11,9 @@ public interface CommentMapper {
     @Select("""
         SELECT c.id, c.post_id, c.user_id, c.parent_id, c.root_id, c.reply_user_id,
                c.content, c.is_deleted, c.create_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic,
-               COALESCE(ru.nickname, ru.username) AS reply_user_name
+               COALESCE(NULLIF(ru.nickname,''), ru.username) AS reply_user_name
         FROM comment c
         LEFT JOIN `user` u ON c.user_id = u.id
         LEFT JOIN `user` ru ON c.reply_user_id = ru.id

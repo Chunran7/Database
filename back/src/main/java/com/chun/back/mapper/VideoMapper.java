@@ -11,7 +11,7 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
@@ -22,7 +22,7 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
@@ -36,7 +36,7 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
@@ -51,10 +51,12 @@ public interface VideoMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Video video);
 
-    @Update("UPDATE video SET views = views + 1 WHERE id = #{videoId} AND is_deleted=0")
+    // 仅“查看/浏览”不应改变更新时间（避免 ON UPDATE 自动更新时间戳）
+    @Update("UPDATE video SET views = views + 1, update_time = update_time WHERE id = #{videoId} AND is_deleted=0")
     int incViews(Long videoId);
 
-    @Update("UPDATE video SET like_count = #{likeCount} WHERE id = #{videoId} AND is_deleted=0")
+    // 点赞数变化不应影响“编辑/更新时间”展示
+    @Update("UPDATE video SET like_count = #{likeCount}, update_time = update_time WHERE id = #{videoId} AND is_deleted=0")
     int updateLikeCount(Long videoId, Integer likeCount);
 
     // ------------------- 我的点赞/收藏 -------------------
@@ -62,7 +64,7 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM video_like vl
         JOIN video v ON vl.video_id = v.id
@@ -75,7 +77,7 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM video_favorite vf
         JOIN video v ON vf.video_id = v.id

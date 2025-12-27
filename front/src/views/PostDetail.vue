@@ -8,7 +8,7 @@
             <div class="meta">
               <el-avatar :src="post.authorPic || defaultAvatar" :size="30" />
               <span class="author">{{ post.author || '匿名用户' }}</span>
-              <span class="time">{{ formatTime(post.createTime) }}</span>
+              <span class="time">{{ formatPostTime(post) }}</span>
               <span class="stat">浏览 {{ post.views || 0 }}</span>
               <span class="stat">回复 {{ post.replyCount || 0 }}</span>
               <span class="stat">赞 {{ post.likeCount || 0 }}</span>
@@ -125,6 +125,26 @@ const formatTime = (t) => {
   const d = new Date(t)
   if (isNaN(d.getTime())) return String(t)
   return d.toLocaleString()
+}
+
+// 只展示两种：未编辑=发表时间；已编辑=编辑于 updateTime
+const isEditedPost = (p) => {
+  if (!p) return false
+  const ct = p.createTime
+  const ut = p.updateTime
+  if (!ct || !ut) return false
+  const cd = new Date(ct)
+  const ud = new Date(ut)
+  const cm = isNaN(cd.getTime()) ? null : cd.getTime()
+  const um = isNaN(ud.getTime()) ? null : ud.getTime()
+  if (cm !== null && um !== null) return Math.abs(um - cm) > 1000
+  return String(ct) !== String(ut)
+}
+
+const formatPostTime = (p) => {
+  if (!p) return ''
+  if (isEditedPost(p)) return `编辑于 ${formatTime(p.updateTime)}`
+  return formatTime(p.createTime)
 }
 
 const goLogin = () => router.push('/login')

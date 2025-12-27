@@ -11,7 +11,7 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
@@ -22,7 +22,7 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
@@ -36,7 +36,7 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
@@ -51,10 +51,12 @@ public interface ArticleMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Article article);
 
-    @Update("UPDATE article SET views = views + 1 WHERE id = #{articleId} AND is_deleted=0")
+    // 仅“查看/浏览”不应改变更新时间（避免 ON UPDATE 自动更新时间戳）
+    @Update("UPDATE article SET views = views + 1, update_time = update_time WHERE id = #{articleId} AND is_deleted=0")
     int incViews(Long articleId);
 
-    @Update("UPDATE article SET like_count = #{likeCount} WHERE id = #{articleId} AND is_deleted=0")
+    // 点赞数变化不应影响“编辑/更新时间”展示
+    @Update("UPDATE article SET like_count = #{likeCount}, update_time = update_time WHERE id = #{articleId} AND is_deleted=0")
     int updateLikeCount(Long articleId, Integer likeCount);
 
     // ------------------- 我的点赞/收藏 -------------------
@@ -62,7 +64,7 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM article_like al
         JOIN article a ON al.article_id = a.id
@@ -75,7 +77,7 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM article_favorite af
         JOIN article a ON af.article_id = a.id

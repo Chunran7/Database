@@ -3,7 +3,7 @@
     <aside class="forum-aside">
       <div class="user-card" @click="goToProfile">
         <div class="user-avatar">
-          <img :src="me?.userPic || defaultAvatar" alt="avatar" />
+          <img :src="avatarSrc || defaultAvatar" alt="avatar" />
         </div>
         <div class="user-info">
           <div class="user-nickname">{{ me?.nickname || me?.username || '未登录' }}</div>
@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
 import { useRouter } from 'vue-router'
@@ -129,6 +129,17 @@ const router = useRouter()
 const token = ref(localStorage.getItem('token'))
 const refreshToken = () => { token.value = localStorage.getItem('token') }
 const me = ref(null)
+
+const normalizePic = (raw) => {
+  if (!raw) return ''
+  if (typeof raw !== 'string') return ''
+  if (raw.startsWith('http')) return raw
+  if (raw.startsWith('/api/')) return raw
+  if (raw.startsWith('/uploads/')) return `/api${raw}`
+  return raw
+}
+
+const avatarSrc = computed(() => normalizePic(me.value?.userPic || me.value?.user_pic))
 
 const loading = ref(false)
 const posts = ref([])
