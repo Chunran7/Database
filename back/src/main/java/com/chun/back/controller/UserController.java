@@ -75,6 +75,9 @@ public class UserController {
         if (u.getPasswordHash() == null || !u.getPasswordHash().equals(md5)) {
             return Result.error("密码错误");
         }
+        if (u.getStatus() != null && u.getStatus() == 0) {
+            return Result.error("账号已被封禁");
+        }
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", u.getId());

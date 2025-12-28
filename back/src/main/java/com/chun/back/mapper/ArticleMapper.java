@@ -11,8 +11,16 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.id = #{id} AND a.is_deleted = 0
@@ -22,8 +30,16 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.is_deleted = 0
@@ -36,8 +52,16 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM article a
         LEFT JOIN `user` u ON a.user_id = u.id
         WHERE a.is_deleted = 0
@@ -64,8 +88,16 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM article_like al
         JOIN article a ON al.article_id = a.id
         LEFT JOIN `user` u ON a.user_id = u.id
@@ -77,8 +109,16 @@ public interface ArticleMapper {
     @Select("""
         SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,
                a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM article_favorite af
         JOIN article a ON af.article_id = a.id
         LEFT JOIN `user` u ON a.user_id = u.id

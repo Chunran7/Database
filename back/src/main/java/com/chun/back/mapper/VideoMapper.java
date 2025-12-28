@@ -11,8 +11,16 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.id = #{id} AND v.is_deleted = 0
@@ -22,8 +30,16 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.is_deleted = 0
@@ -36,8 +52,16 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM video v
         LEFT JOIN `user` u ON v.user_id = u.id
         WHERE v.is_deleted = 0
@@ -64,8 +88,16 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM video_like vl
         JOIN video v ON vl.video_id = v.id
         LEFT JOIN `user` u ON v.user_id = u.id
@@ -77,8 +109,16 @@ public interface VideoMapper {
     @Select("""
         SELECT v.id, v.user_id, v.title, v.url, v.cover, v.description,
                v.views, v.like_count, v.is_deleted, v.create_time, v.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM video_favorite vf
         JOIN video v ON vf.video_id = v.id
         LEFT JOIN `user` u ON v.user_id = u.id

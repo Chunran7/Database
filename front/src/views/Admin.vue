@@ -187,9 +187,7 @@ const loginForm = reactive({ username: 'seu666', password: '' }) // 默认填入
 
 const stats = ref({ userCount: 0, articleCount: 0, videoCount: 0, postCount: 0 })
 const userList = ref([
-    // 模拟数据，实际应从后端获取
-    { id: 1, username: 'test_user', email: 'test@example.com', status: 1 },
-    { id: 2, username: 'bad_guy', email: 'spam@example.com', status: 0 },
+    //用户的信息
 ])
 
 const articleForm = ref({ title: '', firstPicture: '', description: '', content: '', author: '管理员' })
@@ -254,22 +252,22 @@ const getMenuName = (key) => {
 
 // 3. 数据获取
 const fetchStats = async () => {
-    try {
-        const res = await request.get('/admin/stats')
-        if (res.data) stats.value = res.data
-    } catch (e) {
-        console.log('获取统计失败，使用默认值')
-        stats.value = { userCount: 1205, articleCount: 450, videoCount: 89, postCount: 3210 }
-    }
+  try {
+    const data = await request.get('/admin/stats')  // data 就是对象
+    stats.value = data || { userCount: 0, articleCount: 0, videoCount: 0, postCount: 0 }
+  } catch (e) {
+    console.log('获取统计失败，使用默认值')
+  }
 }
 
+
 const fetchUsers = async () => {
-    try {
-        const res = await request.get('/admin/users')
-        if (res.data) userList.value = res.data
-    } catch (e) {
-        // 保持模拟数据
-    }
+  try {
+    const data = await request.get('/admin/users')  // data 就是数组
+    userList.value = data || []
+  } catch (e) {
+    ElMessage.error(e.message || '获取用户列表失败')
+  }
 }
 
 // 4. 内容提交
@@ -300,7 +298,7 @@ const toggleUserStatus = async (user) => {
     const actionText = newStatus === 1 ? '解封' : '封禁'
     try {
         await ElMessageBox.confirm(`确定要${actionText}用户 ${user.username} 吗?`, '警告', { type: 'warning' })
-        // await request.put(`/admin/users/${user.id}/status?status=${newStatus}`)
+        await request.put(`/admin/users/${user.id}/status?status=${newStatus}`)
         user.status = newStatus // 前端乐观更新
         ElMessage.success(`已${actionText}`)
     } catch (e) {

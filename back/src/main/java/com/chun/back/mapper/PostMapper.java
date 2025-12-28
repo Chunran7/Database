@@ -10,8 +10,16 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM post p
         LEFT JOIN `user` u ON p.user_id = u.id
         WHERE p.id = #{id} AND p.is_deleted = 0
@@ -20,8 +28,16 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM post p
         LEFT JOIN `user` u ON p.user_id = u.id
         WHERE p.is_deleted = 0
@@ -58,8 +74,16 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM post p
         LEFT JOIN `user` u ON p.user_id = u.id
         WHERE p.is_deleted = 0 AND p.user_id = #{userId}
@@ -77,8 +101,16 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM post_like pl
         JOIN post p ON pl.post_id = p.id
         LEFT JOIN `user` u ON p.user_id = u.id
@@ -89,8 +121,16 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic
+               
         FROM post_favorite pf
         JOIN post p ON pf.post_id = p.id
         LEFT JOIN `user` u ON p.user_id = u.id

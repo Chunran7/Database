@@ -11,9 +11,21 @@ public interface CommentMapper {
     @Select("""
         SELECT c.id, c.post_id, c.user_id, c.parent_id, c.root_id, c.reply_user_id,
                c.content, c.is_deleted, c.create_time,
-               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
-               u.user_pic AS author_pic,
-               COALESCE(NULLIF(ru.nickname,''), ru.username) AS reply_user_name
+               CASE
+                 WHEN u.id IS NULL THEN '用户不存在'
+                 WHEN u.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(u.nickname,''), u.username)
+               END AS author,
+               CASE
+                 WHEN u.status = 0 THEN NULL
+                 ELSE u.user_pic
+               END AS author_pic,
+               CASE
+                 WHEN ru.id IS NULL THEN NULL
+                 WHEN ru.status = 0 THEN '账号已封禁'
+                 ELSE COALESCE(NULLIF(ru.nickname,''), ru.username)
+               END AS reply_user_name
+               
         FROM comment c
         LEFT JOIN `user` u ON c.user_id = u.id
         LEFT JOIN `user` ru ON c.reply_user_id = ru.id

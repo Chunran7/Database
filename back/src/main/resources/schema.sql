@@ -35,6 +35,10 @@ CREATE TABLE `user` (
   UNIQUE KEY `uk_user_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+#便于管理员的解封与封禁
+ALTER TABLE `user`
+    ADD COLUMN `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态(1正常,0封禁)' AFTER `user_pic`;
+
 -- =========================================================
 -- 2) Article (对应 Article.java)
 --   author(字符串) -> user_id(外键)
@@ -280,5 +284,29 @@ CREATE TABLE `user_follow` (
     FOREIGN KEY (`followee_id`) REFERENCES `user` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关注表';
+
+-- =========================================================
+-- 13) Admin
+-- =========================================================
+DROP TABLE IF EXISTS `admin`;
+CREATE TABLE `admin` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
+    `username` VARCHAR(50) NOT NULL COMMENT '登录名',
+    `password` VARCHAR(64) NOT NULL COMMENT '密码(建议存MD5/BCrypt后的密文)',
+    `nickname` VARCHAR(50) DEFAULT NULL COMMENT '昵称',
+    `admin_pic` VARCHAR(255) DEFAULT NULL COMMENT '头像',
+    `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态(1启用,0停用)',
+    `last_login_time` DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    `last_login_ip` VARCHAR(64) DEFAULT NULL COMMENT '最后登录IP',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_admin_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
+
+INSERT INTO `admin`(username, password, nickname, status)
+VALUES ('admin', MD5('admin123'), '超级管理员', 1);
+
 
 SET FOREIGN_KEY_CHECKS = 1;

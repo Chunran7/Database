@@ -401,7 +401,7 @@ const saveProfile = async () => {
     const userPic = (form.userPic || '').trim()
     await updateProfileService({
 
-ickname: nickname ? nickname : null,
+      nickname: nickname ? nickname : null,
       email: email ? email : null,
       userPic: userPic ? userPic : null
     })
