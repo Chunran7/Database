@@ -3,6 +3,8 @@ package com.chun.back.mapper;
 import com.chun.back.pojo.User;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 @Mapper
 public interface UserMapper {
 
@@ -26,6 +28,9 @@ public interface UserMapper {
     @Update("UPDATE `user` SET nickname=#{nickname}, email=#{email}, user_pic=#{userPic}, update_time=NOW() WHERE id=#{id}")
     int updateProfile(User user);
 
+    @Update("UPDATE `user` SET user_pic=#{userPic}, update_time=NOW() WHERE id=#{userId}")
+    int updateAvatar(Long userId, String userPic);
+
     @Select("SELECT COUNT(*) FROM user_follow WHERE followee_id = #{userId}")
     int followerCount(Long userId);
 
@@ -34,4 +39,15 @@ public interface UserMapper {
 
     @Select("SELECT COUNT(*) FROM user_follow WHERE follower_id = #{viewerId} AND followee_id = #{targetId}")
     int isFollowed(Long viewerId, Long targetId);
+
+    @Select("""
+        SELECT u.id, u.username, u.nickname, u.email, u.user_pic, 1 AS status, u.create_time, u.update_time,
+               (SELECT COUNT(*) FROM user_follow WHERE followee_id = u.id) AS follower_count,
+               (SELECT COUNT(*) FROM user_follow WHERE follower_id = u.id) AS following_count
+        FROM user_follow uf
+        JOIN `user` u ON uf.followee_id = u.id
+        WHERE uf.follower_id = #{userId}
+        ORDER BY uf.create_time DESC, uf.id DESC
+        """)
+    List<User> listFollowing(Long userId);
 }

@@ -27,3 +27,18 @@ export const createCommentService = (payload) => request.post(`/comment`, payloa
 
 // 删除评论（需要登录）
 export const deleteCommentService = (commentId) => request.delete(`/comment/${commentId}`);
+
+// 我发布的帖子（管理页）
+export const getMyPostsService = () => request.get('/post/me/list')
+
+// 编辑我的帖子
+export const updateMyPostService = (id, data) => request.put(`/post/me/${id}`, data)
+
+// 删除我的帖子
+export const deleteMyPostService = (id) => request.delete(`/post/me/${id}`)
+
+// 我点赞的帖子
+export const getMyLikedPostsService = () => request.get('/post/me/liked')
+
+// 我收藏的帖子
+export const getMyFavoritedPostsService = () => request.get('/post/me/favorited')

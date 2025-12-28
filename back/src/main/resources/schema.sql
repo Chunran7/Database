@@ -5,6 +5,7 @@
 -- =========================================================
 
 -- 0. Create DB
+-- 统一数据库名：dbproject
 CREATE DATABASE IF NOT EXISTS `dbproject`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
@@ -15,23 +16,23 @@ USE `dbproject`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- =========================================================
--- 1) Users
+-- 1) user（与现有后端逻辑保持一致）
+--   表名：`user`
+--   密码列：`password`
 -- =========================================================
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '用户ID',
   `username` VARCHAR(50) NOT NULL COMMENT '用户名',
-  `password` VARCHAR(255) NOT NULL COMMENT '密码(建议哈希存储)',
+  `password` VARCHAR(255) NOT NULL COMMENT '密码(MD5/其他哈希后的字符串)',
   `nickname` VARCHAR(50) DEFAULT NULL COMMENT '昵称',
   `email` VARCHAR(128) DEFAULT NULL COMMENT '邮箱',
   `user_pic` VARCHAR(255) DEFAULT NULL COMMENT '用户头像地址',
-  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态(1正常,0停用/封禁)',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_username` (`username`),
-  UNIQUE KEY `uk_user_email` (`email`),
-  CONSTRAINT `ck_user_status` CHECK (`status` IN (0, 1))
+  UNIQUE KEY `uk_user_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 -- =========================================================

@@ -90,6 +90,47 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public List<Post> myList(Long userId) {
+        List<Post> list = postMapper.listByUser(userId);
+        // 自己看自己：liked/favorited 也给出正确值，便于前端在管理页展示
+        for (Post p : list) {
+            p.setLiked(postLikeMapper.exists(p.getId(), userId) > 0);
+            p.setFavorited(postFavoriteMapper.exists(p.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
+    public boolean updateMyPost(Long userId, Long postId, String title, String content) {
+        return postMapper.updateByIdAndUserId(userId, postId, title, content) > 0;
+    }
+
+    @Override
+    public boolean deleteMyPost(Long userId, Long postId) {
+        return postMapper.softDeleteByIdAndUserId(userId, postId) > 0;
+    }
+
+    @Override
+    public List<Post> myLiked(Long userId) {
+        List<Post> list = postMapper.listLikedByUser(userId);
+        for (Post p : list) {
+            p.setLiked(true);
+            p.setFavorited(postFavoriteMapper.exists(p.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
+    public List<Post> myFavorited(Long userId) {
+        List<Post> list = postMapper.listFavoritedByUser(userId);
+        for (Post p : list) {
+            p.setFavorited(true);
+            p.setLiked(postLikeMapper.exists(p.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
     public Map<String, Object> toggleLike(Long postId, Long userId) {
         boolean existed = postLikeMapper.exists(postId, userId) > 0;
         if (existed) {

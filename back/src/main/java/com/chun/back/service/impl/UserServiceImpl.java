@@ -9,6 +9,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -66,12 +68,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateProfile(Long userId, String nickname, String email, String userPic) {
+        // 允许邮箱/昵称为空：空字符串会导致
+        // 1) 列表 author 的 COALESCE 被空昵称截断（显示成“匿名用户”）
+        // 2) user.email 的唯一索引在多用户都填空字符串时冲突
+        if (nickname != null && nickname.trim().isEmpty()) nickname = null;
+        if (email != null && email.trim().isEmpty()) email = null;
+        if (userPic != null && userPic.trim().isEmpty()) userPic = null;
         User u = new User();
         u.setId(userId);
         u.setNickname(nickname);
         u.setEmail(email);
         u.setUserPic(userPic);
         userMapper.updateProfile(u);
+    }
+
+    @Override
+    public void updateAvatar(Long userId, String userPic) {
+        userMapper.updateAvatar(userId, userPic);
     }
 
     @Override
@@ -86,5 +99,17 @@ public class UserServiceImpl implements UserService {
             userFollowMapper.insert(followerId, followingId);
         }
         return getProfile(followingId, followerId);
+    }
+
+    @Override
+    public List<User> listFollowing(Long userId) {
+        List<User> list = userMapper.listFollowing(userId);
+        // viewer 就是 userId 本人，followed 恒为 true
+        if (list != null) {
+            for (User u : list) {
+                u.setFollowed(true);
+            }
+        }
+        return list;
     }
 }

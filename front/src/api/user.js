@@ -25,3 +25,15 @@ export const updateProfileService = (data) => request.put('/user/profile', data)
 
 // 关注 / 取消关注（需要登录）
 export const toggleFollowService = (id) => request.post(`/user/follow/${id}/toggle`)
+
+// 我关注的人列表（需要登录）
+export const getFollowingService = () => request.get('/user/following')
+
+// 上传头像（需要登录）
+export const uploadAvatarService = (file) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return request.post('/user/avatar/upload', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}

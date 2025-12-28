@@ -10,7 +10,7 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM post p
         LEFT JOIN `user` u ON p.user_id = u.id
@@ -20,7 +20,7 @@ public interface PostMapper {
 
     @Select("""
         SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
-               COALESCE(u.nickname, u.username) AS author,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
                u.user_pic AS author_pic
         FROM post p
         LEFT JOIN `user` u ON p.user_id = u.id
@@ -36,15 +36,66 @@ public interface PostMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Post post);
 
-    @Update("UPDATE post SET views = views + 1 WHERE id = #{postId} AND is_deleted=0")
+    // 注意：post.update_time 在 DB 中通常带有 ON UPDATE CURRENT_TIMESTAMP。
+    // 仅“查看/浏览”不应被视为“编辑”，因此这里显式写 update_time = update_time
+    // 以避免触发自动更新时间戳。
+    @Update("UPDATE post SET views = views + 1, update_time = update_time WHERE id = #{postId} AND is_deleted=0")
     int incViews(Long postId);
 
-    @Update("UPDATE post SET reply_count = reply_count + 1 WHERE id = #{postId} AND is_deleted=0")
+    // 回复数变化不应影响“编辑时间”
+    @Update("UPDATE post SET reply_count = reply_count + 1, update_time = update_time WHERE id = #{postId} AND is_deleted=0")
     int incReplyCount(Long postId);
 
-    @Update("UPDATE post SET reply_count = IF(reply_count>0, reply_count-1, 0) WHERE id = #{postId} AND is_deleted=0")
+    // 回复数变化不应影响“编辑时间”
+    @Update("UPDATE post SET reply_count = IF(reply_count>0, reply_count-1, 0), update_time = update_time WHERE id = #{postId} AND is_deleted=0")
     int decReplyCount(Long postId);
 
-    @Update("UPDATE post SET like_count = #{likeCount} WHERE id = #{postId} AND is_deleted=0")
+    // 点赞数变化不应影响“编辑时间”
+    @Update("UPDATE post SET like_count = #{likeCount}, update_time = update_time WHERE id = #{postId} AND is_deleted=0")
     int updateLikeCount(Long postId, Integer likeCount);
+
+    // ------------------- 我的帖子管理 -------------------
+
+    @Select("""
+        SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
+               u.user_pic AS author_pic
+        FROM post p
+        LEFT JOIN `user` u ON p.user_id = u.id
+        WHERE p.is_deleted = 0 AND p.user_id = #{userId}
+        ORDER BY p.create_time DESC, p.id DESC
+        """)
+    List<Post> listByUser(Long userId);
+
+    @Update("UPDATE post SET title=#{title}, content=#{content}, update_time=NOW() WHERE id=#{postId} AND user_id=#{userId} AND is_deleted=0")
+    int updateByIdAndUserId(Long userId, Long postId, String title, String content);
+
+    @Update("UPDATE post SET is_deleted=1, update_time=NOW() WHERE id=#{postId} AND user_id=#{userId} AND is_deleted=0")
+    int softDeleteByIdAndUserId(Long userId, Long postId);
+
+    // ------------------- 我的点赞/收藏 -------------------
+
+    @Select("""
+        SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
+               u.user_pic AS author_pic
+        FROM post_like pl
+        JOIN post p ON pl.post_id = p.id
+        LEFT JOIN `user` u ON p.user_id = u.id
+        WHERE pl.user_id = #{userId} AND p.is_deleted = 0
+        ORDER BY pl.create_time DESC, pl.id DESC
+        """)
+    List<Post> listLikedByUser(Long userId);
+
+    @Select("""
+        SELECT p.id, p.user_id, p.title, p.content, p.views, p.like_count, p.reply_count, p.is_deleted, p.create_time, p.update_time,
+               COALESCE(NULLIF(u.nickname,''), u.username) AS author,
+               u.user_pic AS author_pic
+        FROM post_favorite pf
+        JOIN post p ON pf.post_id = p.id
+        LEFT JOIN `user` u ON p.user_id = u.id
+        WHERE pf.user_id = #{userId} AND p.is_deleted = 0
+        ORDER BY pf.create_time DESC, pf.id DESC
+        """)
+    List<Post> listFavoritedByUser(Long userId);
 }

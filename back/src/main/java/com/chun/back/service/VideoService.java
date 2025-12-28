@@ -15,6 +15,12 @@ public interface VideoService {
 
     Long create(Video video);
 
+    /** 我点赞的视频 */
+    List<Video> myLiked(Long userId);
+
+    /** 我收藏的视频 */
+    List<Video> myFavorited(Long userId);
+
     Map<String, Object> toggleLike(Long videoId, Long userId);
 
     Map<String, Object> toggleFavorite(Long videoId, Long userId);

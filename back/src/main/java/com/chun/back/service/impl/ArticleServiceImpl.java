@@ -104,6 +104,26 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public List<Article> myLiked(Long userId) {
+        List<Article> list = articleMapper.listLikedByUser(userId);
+        for (Article a : list) {
+            a.setLiked(true);
+            a.setFavorited(articleFavoriteMapper.exists(a.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
+    public List<Article> myFavorited(Long userId) {
+        List<Article> list = articleMapper.listFavoritedByUser(userId);
+        for (Article a : list) {
+            a.setFavorited(true);
+            a.setLiked(articleLikeMapper.exists(a.getId(), userId) > 0);
+        }
+        return list;
+    }
+
+    @Override
     public Map<String, Object> toggleLike(Long articleId, Long userId) {
         boolean existed = articleLikeMapper.exists(articleId, userId) > 0;
         if (existed) {
