@@ -6,18 +6,20 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class Admin {
+public class AdminApply {
     private Long id;
     private String username;
 
-    private Integer isRoot;
     @JsonIgnore
-    private String passwordHash; // 对应表里 password
+    private String passwordHash; // 映射表字段 password
 
     private String nickname;
     private String email;
-    private Integer status;
+    private String reason;
 
+    private Integer status; // 0待审核 1通过 2拒绝
+    private Long reviewerAdminId;
+    private String reviewRemark;
+    private LocalDateTime reviewTime;
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }

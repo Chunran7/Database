@@ -13,6 +13,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private LoginInterceptor loginInterceptor;
 
+    @Autowired
+    private com.chun.back.interceptors.AdminInterceptor adminInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
@@ -44,7 +47,13 @@ public class WebConfig implements WebMvcConfigurer {
                         "/favicon.ico",
                         "/admin/**"
                 );
+
+        // 新增：管理员拦截器
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/admin/**")
+                .excludePathPatterns("/admin/login", "/admin/register");
     }
+
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

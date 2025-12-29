@@ -21,4 +21,8 @@ public interface AdminMapper {
 
     @Update("UPDATE admin SET last_login_time = NOW(), last_login_ip = #{ip}, update_time = NOW() WHERE id = #{id}")
     int updateLoginInfo(Long id, String ip);
+
+    @Select("SELECT id, username, status, is_root FROM admin WHERE id=#{id} LIMIT 1")
+    Admin findBasicById(Long id);
+
 }

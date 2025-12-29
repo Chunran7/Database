@@ -308,5 +308,30 @@ CREATE TABLE `admin` (
 INSERT INTO `admin`(username, password, nickname, status)
 VALUES ('admin', MD5('admin123'), '超级管理员', 1);
 
+ALTER TABLE admin
+    ADD COLUMN is_root TINYINT NOT NULL DEFAULT 0 COMMENT '是否初始管理员(1是,0否)';
+
+UPDATE admin SET is_root=1 WHERE username=  'admin';
+
+-- =========================================================
+-- 14) Admin申请表
+-- =========================================================
+DROP TABLE IF EXISTS admin_apply;
+CREATE TABLE admin_apply (
+                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                             username VARCHAR(50) NOT NULL,
+                             password VARCHAR(64) NOT NULL COMMENT '密码密文(MD5/BCrypt)',
+                             nickname VARCHAR(50) DEFAULT NULL,
+                             email VARCHAR(100) DEFAULT NULL,
+                             reason VARCHAR(255) DEFAULT NULL COMMENT '申请理由',
+                             status TINYINT NOT NULL DEFAULT 0 COMMENT '0待审核 1通过 2拒绝',
+                             reviewer_admin_id BIGINT DEFAULT NULL COMMENT '审核人管理员ID',
+                             review_remark VARCHAR(255) DEFAULT NULL COMMENT '审核备注/拒绝原因',
+                             review_time DATETIME DEFAULT NULL,
+                             create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                             UNIQUE KEY uk_apply_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员申请表';
+
+
 
 SET FOREIGN_KEY_CHECKS = 1;
