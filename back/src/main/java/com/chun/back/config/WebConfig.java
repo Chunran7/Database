@@ -1,10 +1,10 @@
 package com.chun.back.config;
 
+import com.chun.back.interceptors.AdminInterceptor;
 import com.chun.back.interceptors.LoginInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -14,54 +14,37 @@ public class WebConfig implements WebMvcConfigurer {
     private LoginInterceptor loginInterceptor;
 
     @Autowired
-    private com.chun.back.interceptors.AdminInterceptor adminInterceptor;
+    private AdminInterceptor adminInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+
+        // ✅ 1) 管理员拦截器：只拦 /admin/**，但放行登录/注册/申请
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/admin/**")
+                .excludePathPatterns(
+                        "/admin/login",
+                        "/admin/register",
+                        "/admin/apply"
+                );
+
+        // ✅ 2) 用户拦截器：拦所有，但必须排除 /admin/**（否则你就会“登录后立刻被踢”）
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
+                        // 用户自身放行
                         "/user/login",
                         "/user/register",
                         "/user/profile/*",
 
-                        "/post/list",
-                        "/post/*",
-                        "/post/*/comments",
-
-                        "/article/list",
-                        "/article/latest",
-                        "/article/*",
-
-                        "/video/list",
-                        "/video/latest",
-                        "/video/*",
-
-                        "/admin/login",
-
-                        // 本地上传头像等静态资源
+                        // 公共资源放行（按你项目实际补）
                         "/uploads/**",
-
-                        "/error",
                         "/static/**",
                         "/favicon.ico",
+                        "/error",
+
+                        // ✅ 关键：排除所有管理员接口
                         "/admin/**"
                 );
-
-        // 新增：管理员拦截器
-        registry.addInterceptor(adminInterceptor)
-                .addPathPatterns("/admin/**")
-                .excludePathPatterns("/admin/login", "/admin/register");
-    }
-
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 将 /uploads/** 映射到项目运行目录下的 uploads/ 目录
-        // 示例：/uploads/avatars/xxx.png -> {user.dir}/uploads/avatars/xxx.png
-        String userDir = System.getProperty("user.dir");
-        String location = "file:" + userDir + "/uploads/";
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(location);
     }
 }

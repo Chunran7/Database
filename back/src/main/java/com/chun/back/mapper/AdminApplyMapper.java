@@ -8,43 +8,26 @@ import java.util.List;
 @Mapper
 public interface AdminApplyMapper {
 
-    @Insert("""
-        INSERT INTO admin_apply(username, password, nickname, email, reason, status)
-        VALUES(#{username}, #{passwordHash}, #{nickname}, #{email}, #{reason}, 0)
-    """)
+    @Select("SELECT 1 FROM admin_apply WHERE username = #{username} AND status = 0 LIMIT 1")
+    Integer existsPendingUsername(String username);
+
+    @Insert("INSERT INTO admin_apply(username, password, nickname, email, admin_pic, reason, status, create_time, update_time) " +
+            "VALUES(#{username}, #{passwordHash}, #{nickname}, #{email}, #{adminPic}, #{reason}, 0, NOW(), NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(AdminApply a);
+    int insert(AdminApply apply);
 
-    @Select("SELECT * FROM admin_apply WHERE username=#{username} LIMIT 1")
-    @Results(id="AdminApplyMap", value={
-            @Result(column="password", property="passwordHash"),
-            @Result(column="reviewer_admin_id", property="reviewerAdminId"),
-            @Result(column="review_remark", property="reviewRemark"),
-            @Result(column="review_time", property="reviewTime"),
-            @Result(column="create_time", property="createTime")
-    })
-    AdminApply findByUsername(@Param("username") String username);
+    @Select("SELECT id, username, password AS password_hash, nickname, email, admin_pic, reason, status, reviewer_id, remark, review_time, create_time, update_time " +
+            "FROM admin_apply WHERE id = #{id} LIMIT 1")
+    AdminApply findById(Long id);
 
-    @Select("SELECT * FROM admin_apply WHERE id=#{id} LIMIT 1")
-    @ResultMap("AdminApplyMap")
-    AdminApply findById(@Param("id") Long id);
+    @Select("SELECT id, username, password AS password_hash, nickname, email, admin_pic, reason, status, reviewer_id, remark, review_time, create_time, update_time " +
+            "FROM admin_apply WHERE status = #{status} ORDER BY create_time ASC")
+    List<AdminApply> listByStatus(int status);
 
-    @Select("SELECT * FROM admin_apply WHERE status=#{status} ORDER BY id DESC")
-    @ResultMap("AdminApplyMap")
-    List<AdminApply> listByStatus(@Param("status") int status);
-
-    @Update("""
-        UPDATE admin_apply
-        SET status=#{status},
-            reviewer_admin_id=#{reviewerAdminId},
-            review_remark=#{reviewRemark},
-            review_time=NOW()
-        WHERE id=#{id}
-    """)
+    @Update("UPDATE admin_apply SET status = #{status}, reviewer_id = #{reviewerId}, remark = #{remark}, review_time = NOW(), update_time = NOW() " +
+            "WHERE id = #{id} AND status = 0")
     int review(@Param("id") Long id,
                @Param("status") int status,
-               @Param("reviewerAdminId") Long reviewerAdminId,
-               @Param("reviewRemark") String reviewRemark);
-
-
+               @Param("reviewerId") Long reviewerId,
+               @Param("remark") String remark);
 }

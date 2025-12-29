@@ -14,12 +14,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import java.util.Map;
 
 @Component
-public class AdminInterceptor implements HandlerInterceptor {
+public class AdminLoginInterceptor implements HandlerInterceptor {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    private AdminMapper adminMapper; // ✅ 注入进来，否则你就会“无法解析符号”
+    private AdminMapper adminMapper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -29,31 +29,30 @@ public class AdminInterceptor implements HandlerInterceptor {
         if (authorization == null || authorization.isBlank()) {
             return unauthorized(response, "需要管理员登录");
         }
+
         String token = authorization.startsWith("Bearer ") ? authorization.substring(7) : authorization;
 
         try {
             Map<String, Object> claims = JwtUtil.parseToken(token);
 
-            Object type = claims.get("type");
-            Object adminIdObj = claims.get("adminId");
-            if (!"admin".equals(String.valueOf(type)) || adminIdObj == null) {
-                return unauthorized(response, "无管理员权限");
+            // 防止用户token冒充：admin token里必须带 role=admin
+            Object role = claims.get("role");
+            if (role == null || !"admin".equals(role.toString())) {
+                return unauthorized(response, "需要管理员登录");
             }
 
-            Long adminId = Long.valueOf(adminIdObj.toString());
+            Object idObj = claims.get("id");
+            if (idObj == null) return unauthorized(response, "需要管理员登录");
 
-            // ✅ 再校验：管理员是否真实存在、是否停用（防止伪造token）
-            Admin me = adminMapper.selectBasicById(adminId);
-            if (me == null) return unauthorized(response, "管理员不存在");
-            if (me.getStatus() != null && me.getStatus() == 0) return unauthorized(response, "管理员账号已停用");
-
-            // ✅ 初始管理员：admin 表最小 id
-            Long firstId = adminMapper.firstAdminId();
-            claims.put("isRoot", firstId != null && firstId.equals(adminId));
+            Long adminId = Long.valueOf(idObj.toString());
+            Admin a = adminMapper.selectById(adminId);
+            if (a == null) return unauthorized(response, "管理员不存在");
+            if (a.getStatus() != null && a.getStatus() == 0) {
+                return unauthorized(response, "管理员账号已停用");
+            }
 
             request.setAttribute("adminClaims", claims);
             return true;
-
         } catch (Exception e) {
             return unauthorized(response, "需要管理员登录");
         }

@@ -126,4 +126,9 @@ public interface VideoMapper {
         ORDER BY vf.create_time DESC, vf.id DESC
         """)
     List<Video> listFavoritedByUser(Long userId);
+
+    // 管理后台统计
+    @Select("SELECT COUNT(*) FROM video WHERE is_deleted = 0")
+    long countNotDeleted();
+
 }

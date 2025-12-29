@@ -314,24 +314,25 @@ ALTER TABLE admin
 UPDATE admin SET is_root=1 WHERE username=  'admin';
 
 -- =========================================================
--- 14) Admin申请表
+-- 14) Admin Apply（管理员申请表：待初始管理员审核）
 -- =========================================================
-DROP TABLE IF EXISTS admin_apply;
-CREATE TABLE admin_apply (
-                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                             username VARCHAR(50) NOT NULL,
-                             password VARCHAR(64) NOT NULL COMMENT '密码密文(MD5/BCrypt)',
-                             nickname VARCHAR(50) DEFAULT NULL,
-                             email VARCHAR(100) DEFAULT NULL,
-                             reason VARCHAR(255) DEFAULT NULL COMMENT '申请理由',
-                             status TINYINT NOT NULL DEFAULT 0 COMMENT '0待审核 1通过 2拒绝',
-                             reviewer_admin_id BIGINT DEFAULT NULL COMMENT '审核人管理员ID',
-                             review_remark VARCHAR(255) DEFAULT NULL COMMENT '审核备注/拒绝原因',
-                             review_time DATETIME DEFAULT NULL,
-                             create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                             UNIQUE KEY uk_apply_username (username)
+DROP TABLE IF EXISTS `admin_apply`;
+CREATE TABLE `admin_apply` (
+                               `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '申请ID',
+                               `username` VARCHAR(50) NOT NULL COMMENT '申请登录名',
+                               `password` VARCHAR(64) NOT NULL COMMENT '密码(建议存MD5/BCrypt后的密文)',
+                               `nickname` VARCHAR(50) DEFAULT NULL COMMENT '昵称',
+                               `admin_pic` VARCHAR(255) DEFAULT NULL COMMENT '头像',
+                               `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
+                               `reason` VARCHAR(255) DEFAULT NULL COMMENT '申请理由',
+                               `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态(0待审核,1通过,2拒绝)',
+                               `reviewer_id` BIGINT DEFAULT NULL COMMENT '审核人(初始管理员ID)',
+                               `remark` VARCHAR(255) DEFAULT NULL COMMENT '审核备注',
+                               `review_time` DATETIME DEFAULT NULL COMMENT '审核时间',
+                               `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
+                               `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                               PRIMARY KEY (`id`),
+                               UNIQUE KEY `uk_admin_apply_username_status0` (`username`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员申请表';
-
-
 
 SET FOREIGN_KEY_CHECKS = 1;

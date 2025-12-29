@@ -138,4 +138,9 @@ public interface PostMapper {
         ORDER BY pf.create_time DESC, pf.id DESC
         """)
     List<Post> listFavoritedByUser(Long userId);
+
+    // 管理后台统计
+    @Select("SELECT COUNT(*) FROM post WHERE is_deleted = 0")
+    long countNotDeleted();
+
 }

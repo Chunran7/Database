@@ -11,15 +11,20 @@ public class AdminApply {
     private String username;
 
     @JsonIgnore
-    private String passwordHash; // 映射表字段 password
+    private String passwordHash; // 对应表里 password
 
     private String nickname;
     private String email;
+    private String adminPic;
     private String reason;
 
-    private Integer status; // 0待审核 1通过 2拒绝
-    private Long reviewerAdminId;
-    private String reviewRemark;
+    /** 0待审核 1通过 2拒绝 */
+    private Integer status;
+
+    private Long reviewerId;
+    private String remark;
     private LocalDateTime reviewTime;
+
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

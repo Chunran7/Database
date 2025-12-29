@@ -126,4 +126,9 @@ public interface ArticleMapper {
         ORDER BY af.create_time DESC, af.id DESC
         """)
     List<Article> listFavoritedByUser(Long userId);
+
+    // 管理后台统计
+    @Select("SELECT COUNT(*) FROM article WHERE is_deleted = 0")
+    long countNotDeleted();
+
 }
