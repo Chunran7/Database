@@ -8,7 +8,6 @@ import com.chun.back.utils.JwtUtil;
 import com.chun.back.utils.Md5Util;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -36,10 +35,6 @@ public class AdminController {
 
     @Autowired
     private PostMapper postMapper;
-
-    // ============================
-    // 1) 管理员账号：登录
-    // ============================
 
     @PostMapping("/login")
     public Result login(@RequestBody Map<String, String> body, HttpServletRequest request) {
@@ -119,9 +114,7 @@ public class AdminController {
 
     @GetMapping("/stats")
     public Result stats(HttpServletRequest request) {
-        // 只要是管理员登录就能看数据看板（不要求 root）
         assertAdminLogin(request);
-
         Map<String, Object> data = new HashMap<>();
         data.put("userCount", userMapper.countAll());
         data.put("articleCount", articleMapper.countNotDeleted());
@@ -155,7 +148,6 @@ public class AdminController {
                 return Long.valueOf(id.toString());
         }
 
-        // 兜底：从 header 解析（即使没配拦截器也能用）
         String auth = request.getHeader("Authorization");
         if (auth == null || auth.isBlank())
             return null;

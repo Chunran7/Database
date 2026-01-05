@@ -53,7 +53,7 @@ CREATE TABLE `article` (
   `content` LONGTEXT COMMENT '文章正文',
   `views` INT NOT NULL DEFAULT 0 COMMENT '浏览量',
   `like_count` INT NOT NULL DEFAULT 0 COMMENT '点赞数',
-  `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除(0未删,1已删)',
+  `is_deleted` INT NOT NULL DEFAULT 0 COMMENT '逻辑删除(0未删,1已删)',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间',
   `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -308,31 +308,5 @@ CREATE TABLE `admin` (
 INSERT INTO `admin`(username, password, nickname, status)
 VALUES ('admin', MD5('admin123'), '超级管理员', 1);
 
-ALTER TABLE admin
-    ADD COLUMN is_root TINYINT NOT NULL DEFAULT 0 COMMENT '是否初始管理员(1是,0否)';
-
-UPDATE admin SET is_root=1 WHERE username=  'admin';
-
--- =========================================================
--- 14) Admin Apply（管理员申请表：待初始管理员审核）
--- =========================================================
-DROP TABLE IF EXISTS `admin_apply`;
-CREATE TABLE `admin_apply` (
-                               `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '申请ID',
-                               `username` VARCHAR(50) NOT NULL COMMENT '申请登录名',
-                               `password` VARCHAR(64) NOT NULL COMMENT '密码(建议存MD5/BCrypt后的密文)',
-                               `nickname` VARCHAR(50) DEFAULT NULL COMMENT '昵称',
-                               `admin_pic` VARCHAR(255) DEFAULT NULL COMMENT '头像',
-                               `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
-                               `reason` VARCHAR(255) DEFAULT NULL COMMENT '申请理由',
-                               `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态(0待审核,1通过,2拒绝)',
-                               `reviewer_id` BIGINT DEFAULT NULL COMMENT '审核人(初始管理员ID)',
-                               `remark` VARCHAR(255) DEFAULT NULL COMMENT '审核备注',
-                               `review_time` DATETIME DEFAULT NULL COMMENT '审核时间',
-                               `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
-                               `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                               PRIMARY KEY (`id`),
-                               UNIQUE KEY `uk_admin_apply_username_status0` (`username`, `status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员申请表';
-
+-- 删除is_root列，不再区分管理员角色
 SET FOREIGN_KEY_CHECKS = 1;

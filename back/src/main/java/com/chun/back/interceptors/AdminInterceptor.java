@@ -22,8 +22,10 @@ public class AdminInterceptor implements HandlerInterceptor {
     private AdminMapper adminMapper; // ✅ 注入进来，否则你就会“无法解析符号”
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+            throws Exception {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod()))
+            return true;
 
         String authorization = request.getHeader("Authorization");
         if (authorization == null || authorization.isBlank()) {
@@ -44,12 +46,10 @@ public class AdminInterceptor implements HandlerInterceptor {
 
             // ✅ 再校验：管理员是否真实存在、是否停用（防止伪造token）
             Admin me = adminMapper.selectBasicById(adminId);
-            if (me == null) return unauthorized(response, "管理员不存在");
-            if (me.getStatus() != null && me.getStatus() == 0) return unauthorized(response, "管理员账号已停用");
-
-            // ✅ 初始管理员：admin 表最小 id
-            Long firstId = adminMapper.firstAdminId();
-            claims.put("isRoot", firstId != null && firstId.equals(adminId));
+            if (me == null)
+                return unauthorized(response, "管理员不存在");
+            if (me.getStatus() != null && me.getStatus() == 0)
+                return unauthorized(response, "管理员账号已停用");
 
             request.setAttribute("adminClaims", claims);
             return true;
