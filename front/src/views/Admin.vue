@@ -138,6 +138,9 @@
                 <el-col :span="4">
                   <el-button type="primary" @click="fetchAdminArticles">搜索</el-button>
                 </el-col>
+                <el-col :span="6" style="text-align: right">
+                  <el-checkbox v-model="articleQuery.includeDeleted" @change="fetchAdminArticles">包含已删除</el-checkbox>
+                </el-col>
               </el-row>
               <el-table :data="adminArticles" stripe style="width: 100%">
                 <el-table-column prop="id" label="ID" width="80" />
@@ -154,9 +157,13 @@
                 <el-table-column label="操作" width="260">
                   <template #default="{ row }">
                     <el-button size="small" @click="viewArticle(row)">查看</el-button>
-                    <el-button size="small" type="warning" @click="toggleArticleDelete(row)">
-                      {{ row.isDeleted === 1 ? '恢复' : '删除' }}
-                    </el-button>
+                    <template v-if="row.isDeleted === 1">
+                      <el-button size="small" type="success" @click="toggleArticleDelete(row)">恢复</el-button>
+                      <el-button size="small" type="danger" @click="hardDeleteArticle(row)">彻底删除</el-button>
+                    </template>
+                    <template v-else>
+                      <el-button size="small" type="warning" @click="toggleArticleDelete(row)">删除</el-button>
+                    </template>
                   </template>
                 </el-table-column>
               </el-table>
@@ -221,7 +228,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Lock, Odometer, Document, Setting, SwitchButton } from '@element-plus/icons-vue'
 import request from '@/utils/request.js'
-import { adminGetArticleList, adminGetArticleById, adminSoftDeleteArticle, adminRestoreArticle } from '@/api/article.js'
+import { adminGetArticleList, adminGetArticleById, adminSoftDeleteArticle, adminRestoreArticle, adminHardDeleteArticle } from '@/api/article.js'
 
 // ================= 状态定义 =================
 const isLoggedIn = ref(
@@ -237,13 +244,13 @@ const stats = ref({ userCount: 0, articleCount: 0, videoCount: 0, postCount: 0 }
 const userList = ref([])
 
 // 管理文章相关
-const articleQuery = reactive({ page: 1, pageSize: 10, keyword: '' })
+const articleQuery = reactive({ page: 1, pageSize: 10, keyword: '', includeDeleted: false })
 const adminArticles = ref([])
 const adminTotal = ref(0)
 
 const fetchAdminArticles = async () => {
   try {
-    const res = await adminGetArticleList({ page: articleQuery.page, pageSize: articleQuery.pageSize, keyword: articleQuery.keyword })
+    const res = await adminGetArticleList({ page: articleQuery.page, pageSize: articleQuery.pageSize, keyword: articleQuery.keyword, includeDeleted: articleQuery.includeDeleted ? 1 : 0 })
     // 后端返回 list，但不包含 total，我们用长度估算。如果需要更精确分页，可扩展后端返回 total
     adminArticles.value = Array.isArray(res) ? res : []
     adminTotal.value = adminArticles.value.length
@@ -269,6 +276,15 @@ const toggleArticleDelete = async (row) => {
       await adminSoftDeleteArticle(row.id)
       ElMessage.success('已删除')
     }
+    fetchAdminArticles()
+  } catch (e) { }
+}
+
+const hardDeleteArticle = async (row) => {
+  try {
+    await ElMessageBox.confirm('彻底删除将永久移除文章，无法恢复，确定继续吗？', '危险操作', { type: 'warning' })
+    await adminHardDeleteArticle(row.id)
+    ElMessage.success('已彻底删除')
     fetchAdminArticles()
   } catch (e) { }
 }

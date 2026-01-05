@@ -42,11 +42,15 @@ export const adminGetArticleList = ({
   sortBy = "create_time",
   order = "DESC",
   keyword = "",
+  includeDeleted = 0,
 } = {}) => {
   return request.get("/admin/articles", {
-    params: { page, pageSize, sortBy, order, keyword },
+    params: { page, pageSize, sortBy, order, keyword, includeDeleted },
   });
 };
+
+export const adminHardDeleteArticle = (id) =>
+  request.delete(`/admin/articles/${id}`);
 
 export const adminGetArticleById = (id) => request.get(`/admin/articles/${id}`);
 

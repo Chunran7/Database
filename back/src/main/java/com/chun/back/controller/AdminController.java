@@ -146,6 +146,7 @@ public class AdminController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String order,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "0") Integer includeDeleted,
             HttpServletRequest request) {
         assertAdminLogin(request);
         // reuse ArticleMapper.list but we need to call with viewerId = null so
@@ -155,7 +156,14 @@ public class AdminController {
         int offset = (p - 1) * ps;
         String sb = sortBy == null ? "create_time" : sortBy;
         String od = order == null ? "DESC" : order;
-        return Result.success(articleMapper.list(ps, offset, sb, od, keyword));
+        return Result.success(articleMapper.listForAdmin(ps, offset, sb, od, keyword, includeDeleted));
+    }
+
+    @DeleteMapping("/articles/{id}")
+    public Result adminHardDeleteArticle(@PathVariable Long id, HttpServletRequest request) {
+        assertAdminLogin(request);
+        int rows = articleMapper.hardDeleteById(id);
+        return rows > 0 ? Result.success() : Result.error("彻底删除失败或文章不存在");
     }
 
     @GetMapping("/articles/{id}")
