@@ -11,14 +11,8 @@
             <el-input v-model="loginForm.username" placeholder="请输入账号" :prefix-icon="User" />
           </el-form-item>
           <el-form-item label="密码">
-            <el-input
-                v-model="loginForm.password"
-                type="password"
-                placeholder="请输入密码"
-                :prefix-icon="Lock"
-                show-password
-                @keyup.enter="handleLogin"
-            />
+            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password
+              @keyup.enter="handleLogin" />
           </el-form-item>
           <el-button type="primary" class="login-btn" @click="handleLogin" :loading="loading">
             立即登录
@@ -32,21 +26,20 @@
         <div class="brand">
           <span>ADMIN PANEL</span>
         </div>
-        <el-menu
-            :default-active="activeMenu"
-            @select="handleMenuSelect"
-            background-color="#304156"
-            text-color="#bfcbd9"
-            active-text-color="#409EFF"
-        >
+        <el-menu :default-active="activeMenu" @select="handleMenuSelect" background-color="#304156" text-color="#bfcbd9"
+          active-text-color="#409EFF">
           <el-menu-item index="dashboard">
-            <el-icon><Odometer /></el-icon>
+            <el-icon>
+              <Odometer />
+            </el-icon>
             <span>数据看板</span>
           </el-menu-item>
 
           <el-sub-menu index="content">
             <template #title>
-              <el-icon><Document /></el-icon>
+              <el-icon>
+                <Document />
+              </el-icon>
               <span>内容发布</span>
             </template>
             <el-menu-item index="publish">发布文章</el-menu-item>
@@ -55,7 +48,9 @@
 
           <el-sub-menu index="management">
             <template #title>
-              <el-icon><Setting /></el-icon>
+              <el-icon>
+                <Setting />
+              </el-icon>
               <span>系统管理</span>
             </template>
             <el-menu-item index="article_mgr">文章管理</el-menu-item>
@@ -63,7 +58,9 @@
           </el-sub-menu>
 
           <el-menu-item index="logout">
-            <el-icon><SwitchButton /></el-icon>
+            <el-icon>
+              <SwitchButton />
+            </el-icon>
             <span>退出登录</span>
           </el-menu-item>
         </el-menu>
@@ -130,6 +127,47 @@
             </el-card>
           </div>
 
+          <div v-if="activeMenu === 'article_mgr'">
+            <el-card>
+              <template #header>文章管理</template>
+              <el-row style="margin-bottom: 12px">
+                <el-col :span="6">
+                  <el-input v-model="articleQuery.keyword" placeholder="搜索标题或摘要" clearable
+                    @keyup.enter="fetchAdminArticles" />
+                </el-col>
+                <el-col :span="4">
+                  <el-button type="primary" @click="fetchAdminArticles">搜索</el-button>
+                </el-col>
+              </el-row>
+              <el-table :data="adminArticles" stripe style="width: 100%">
+                <el-table-column prop="id" label="ID" width="80" />
+                <el-table-column prop="title" label="标题" />
+                <el-table-column prop="author" label="作者" width="140" />
+                <el-table-column prop="views" label="浏览" width="100" />
+                <el-table-column prop="likeCount" label="点赞" width="100" />
+                <el-table-column label="状态" width="120">
+                  <template #default="{ row }">
+                    <el-tag :type="row.isDeleted === 1 ? 'danger' : 'success'">{{ row.isDeleted === 1 ? '已删除' : '正常'
+                    }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="260">
+                  <template #default="{ row }">
+                    <el-button size="small" @click="viewArticle(row)">查看</el-button>
+                    <el-button size="small" type="warning" @click="toggleArticleDelete(row)">
+                      {{ row.isDeleted === 1 ? '恢复' : '删除' }}
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div style="margin-top: 12px; text-align: right">
+                <el-pagination background layout="prev, pager, next" :total="adminTotal"
+                  :page-size="articleQuery.pageSize" :current-page.sync="articleQuery.page"
+                  @current-change="fetchAdminArticles" />
+              </div>
+            </el-card>
+          </div>
+
           <div v-if="activeMenu === 'video_publish'">
             <el-card>
               <template #header>上传视频信息</template>
@@ -163,11 +201,8 @@
                 </el-table-column>
                 <el-table-column label="操作">
                   <template #default="scope">
-                    <el-button
-                        size="small"
-                        :type="scope.row.status === 1 ? 'danger' : 'success'"
-                        @click="toggleUserStatus(scope.row)"
-                    >
+                    <el-button size="small" :type="scope.row.status === 1 ? 'danger' : 'success'"
+                      @click="toggleUserStatus(scope.row)">
                       {{ scope.row.status === 1 ? '封禁' : '解封' }}
                     </el-button>
                   </template>
@@ -186,11 +221,12 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Lock, Odometer, Document, Setting, SwitchButton } from '@element-plus/icons-vue'
 import request from '@/utils/request.js'
+import { adminGetArticleList, adminGetArticleById, adminSoftDeleteArticle, adminRestoreArticle } from '@/api/article.js'
 
 // ================= 状态定义 =================
 const isLoggedIn = ref(
-    sessionStorage.getItem('admin_logged_in') === 'true' &&
-    !!localStorage.getItem('admin_token')
+  sessionStorage.getItem('admin_logged_in') === 'true' &&
+  !!localStorage.getItem('admin_token')
 )
 
 const loading = ref(false)
@@ -199,6 +235,43 @@ const loginForm = reactive({ username: '', password: '' })
 
 const stats = ref({ userCount: 0, articleCount: 0, videoCount: 0, postCount: 0 })
 const userList = ref([])
+
+// 管理文章相关
+const articleQuery = reactive({ page: 1, pageSize: 10, keyword: '' })
+const adminArticles = ref([])
+const adminTotal = ref(0)
+
+const fetchAdminArticles = async () => {
+  try {
+    const res = await adminGetArticleList({ page: articleQuery.page, pageSize: articleQuery.pageSize, keyword: articleQuery.keyword })
+    // 后端返回 list，但不包含 total，我们用长度估算。如果需要更精确分页，可扩展后端返回 total
+    adminArticles.value = Array.isArray(res) ? res : []
+    adminTotal.value = adminArticles.value.length
+  } catch (e) {
+    ElMessage.error(e?.message || '获取文章列表失败')
+  }
+}
+
+const viewArticle = async (row) => {
+  try {
+    const a = await adminGetArticleById(row.id)
+    ElMessageBox.alert(a.content || a.description || '无内容', a.title || '文章预览', { dangerouslyUseHTMLString: false })
+  } catch (e) { }
+}
+
+const toggleArticleDelete = async (row) => {
+  try {
+    if (row.isDeleted === 1) {
+      await adminRestoreArticle(row.id)
+      ElMessage.success('已恢复')
+    } else {
+      await ElMessageBox.confirm('确认删除这篇文章吗？', '删除确认', { type: 'warning' })
+      await adminSoftDeleteArticle(row.id)
+      ElMessage.success('已删除')
+    }
+    fetchAdminArticles()
+  } catch (e) { }
+}
 
 const articleForm = ref({ title: '', firstPicture: '', description: '', content: '', author: '管理员' })
 const videoForm = ref({ title: '', url: '', cover: '', description: '', author: '管理员' })
@@ -224,6 +297,8 @@ const handleLogin = async () => {
 
     ElMessage.success('欢迎回来')
     await fetchStats()
+    // 登录后如果当前在文章管理页，立即加载
+    if (activeMenu.value === 'article_mgr') fetchAdminArticles()
   } catch (err) {
     ElMessage.error(err?.message || '账号或密码错误')
   } finally {
@@ -249,6 +324,7 @@ const handleMenuSelect = (index) => {
     activeMenu.value = index
     if (index === 'dashboard') fetchStats()
     if (index === 'user_mgr') fetchUsers()
+    if (index === 'article_mgr') fetchAdminArticles()
   }
 }
 
@@ -277,7 +353,7 @@ const fetchUsers = async () => {
   try {
     const data = await request.get('/admin/users')
     userList.value = data || []
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // 4. 内容提交
@@ -317,7 +393,7 @@ const toggleUserStatus = async (user) => {
     await request.put(`/admin/users/${user.id}/status?status=${newStatus}`)
     user.status = newStatus
     ElMessage.success(`已${actionText}`)
-  } catch (e) {}
+  } catch (e) { }
 }
 
 onMounted(() => {
@@ -330,6 +406,8 @@ onMounted(() => {
   }
 
   if (isLoggedIn.value) fetchStats()
+  // 如果已登录且当前菜单为文章管理，自动加载列表
+  if (isLoggedIn.value && activeMenu.value === 'article_mgr') fetchAdminArticles()
 })
 
 onUnmounted(() => {
