@@ -136,39 +136,4 @@ public interface ArticleMapper {
   @Update("UPDATE article SET is_deleted = #{isDeleted} WHERE id = #{articleId}")
   int updateIsDeleted(@Param("articleId") Long articleId, @Param("isDeleted") int isDeleted);
 
-  // 管理员使用：支持包含已删除文章的列表（如果 includeDeleted = 1 则忽略 is_deleted 过滤）
-  @Select({
-      "<script>",
-      "SELECT a.id, a.user_id, a.title, a.first_picture, a.description, a.content,",
-      "       a.views, a.like_count, a.is_deleted, a.create_time, a.update_time,",
-      "       CASE",
-      "         WHEN u.id IS NULL THEN '用户不存在'",
-      "         WHEN u.status = 0 THEN '账号已封禁'",
-      "         ELSE COALESCE(NULLIF(u.nickname,''), u.username)",
-      "       END AS author,",
-      "       CASE",
-      "         WHEN u.status = 0 THEN NULL",
-      "         ELSE u.user_pic",
-      "       END AS author_pic",
-      "FROM article a",
-      "LEFT JOIN `user` u ON a.user_id = u.id",
-      "<where>",
-      "  <if test='includeDeleted == null or includeDeleted == 0'>",
-      "    AND a.is_deleted = 0",
-      "  </if>",
-      "  <if test=\"keyword != null and keyword != ''\">",
-      "    AND (a.title LIKE CONCAT('%', #{keyword}, '%') OR a.description LIKE CONCAT('%', #{keyword}, '%'))",
-      "  </if>",
-      "</where>",
-      "ORDER BY ${sortBy} ${order}",
-      "LIMIT #{pageSize} OFFSET #{offset}",
-      "</script>"
-  })
-  List<Article> listForAdmin(@Param("pageSize") int pageSize, @Param("offset") int offset,
-      @Param("sortBy") String sortBy, @Param("order") String order,
-      @Param("keyword") String keyword, @Param("includeDeleted") Integer includeDeleted);
-
-  @Delete("DELETE FROM article WHERE id = #{articleId}")
-  int hardDeleteById(@Param("articleId") Long articleId);
-
 }

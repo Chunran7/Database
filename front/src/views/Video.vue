@@ -14,9 +14,9 @@
         <el-row :gutter="24" v-else>
           <el-col :span="8" v-for="video in pagedVideos" :key="video.id">
             <el-card shadow="hover" class="article-card" @click="goToVideo(video.id)">
-              <img :src="video.url || '/images/introduction.png'" alt="封面图" class="article-img" />
+              <img :src="normalizeMedia(video.cover) || '/images/introduction.png'" alt="封面图" class="article-img" />
               <h3 class="article-title">{{ video.title }}</h3>
-              <p class="article-description">{{ truncate(video.summary, 35) }}</p>
+              <p class="article-description">{{ truncate(video.description, 35) }}</p>
             </el-card>
           </el-col>
         </el-row>
@@ -38,6 +38,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Footer from '@/components/Footer.vue'
 import { getVideoListService } from '@/api/video.js'
+import { normalizeMedia } from '@/utils/media.js'
 
 const router = useRouter()
 

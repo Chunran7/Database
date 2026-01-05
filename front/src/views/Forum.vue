@@ -61,20 +61,11 @@
             </div>
 
             <div class="right">
-              <el-button
-                :type="p.liked ? 'primary' : 'default'"
-                size="small"
-                @click="toggleLike(p)"
-                :disabled="!token"
-              >
+              <el-button :type="p.liked ? 'primary' : 'default'" size="small" @click="toggleLike(p)" :disabled="!token">
                 {{ p.liked ? '已赞' : '点赞' }}
               </el-button>
-              <el-button
-                :type="p.favorited ? 'warning' : 'default'"
-                size="small"
-                @click="toggleFavorite(p)"
-                :disabled="!token"
-              >
+              <el-button :type="p.favorited ? 'warning' : 'default'" size="small" @click="toggleFavorite(p)"
+                :disabled="!token">
                 {{ p.favorited ? '已藏' : '收藏' }}
               </el-button>
             </div>
@@ -82,13 +73,8 @@
         </div>
 
         <div class="pager">
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            :page-size="pageSize"
-            :current-page="page"
-            @current-change="onPageChange"
-          />
+          <el-pagination background layout="prev, pager, next" :page-size="pageSize" :current-page="page"
+            @current-change="onPageChange" />
         </div>
       </el-card>
     </main>
@@ -115,6 +101,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
+import { normalizeMedia } from '@/utils/media.js'
 import { useRouter } from 'vue-router'
 import { getMeService } from '@/api/user'
 import {
@@ -130,16 +117,7 @@ const token = ref(localStorage.getItem('token'))
 const refreshToken = () => { token.value = localStorage.getItem('token') }
 const me = ref(null)
 
-const normalizePic = (raw) => {
-  if (!raw) return ''
-  if (typeof raw !== 'string') return ''
-  if (raw.startsWith('http')) return raw
-  if (raw.startsWith('/api/')) return raw
-  if (raw.startsWith('/uploads/')) return `/api${raw}`
-  return raw
-}
-
-const avatarSrc = computed(() => normalizePic(me.value?.userPic || me.value?.user_pic))
+const avatarSrc = computed(() => normalizeMedia(me.value?.userPic || me.value?.user_pic))
 
 const loading = ref(false)
 const posts = ref([])

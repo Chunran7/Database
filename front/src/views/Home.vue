@@ -35,8 +35,8 @@
                     <el-row :gutter="24" v-else>
                         <el-col :span="8" v-for="article in articles" :key="article.id">
                             <el-card shadow="hover" class="article-card" @click="goToArticle(article.id)">
-                                <img :src="article.firstPicture || 'https://placehold.co/300x150'" alt="封面图"
-                                    class="article-img" />
+                                <img :src="normalizeMedia(article.firstPicture) || 'https://placehold.co/300x150'"
+                                    alt="封面图" class="article-img" />
                                 <h3 class="article-title">{{ article.title }}</h3>
                                 <p class="article-description">{{ truncate(article.description, 35) }}</p>
                             </el-card>
@@ -49,8 +49,10 @@
                     <h1 class="section-title">视频课堂</h1>
                     <el-row :gutter="20">
                         <el-col :span="6" v-for="(video, index) in videos" :key="video.id">
-                            <el-card :body-style="{ padding: '10px' }" shadow="hover" class="video-card" @click="goToVideo(video.id)">
-                                <el-image :src="video.cover" fit="cover" style="height: 150px;"></el-image>
+                            <el-card :body-style="{ padding: '10px' }" shadow="hover" class="video-card"
+                                @click="goToVideo(video.id)">
+                                <el-image :src="normalizeMedia(video.cover)" fit="cover"
+                                    style="height: 150px;"></el-image>
                                 <h3 style="margin: 10px 0;">{{ video.title }}</h3>
                             </el-card>
                         </el-col>
@@ -71,6 +73,7 @@ import { useRouter } from 'vue-router'
 import Footer from '@/components/Footer.vue'
 import { getArticleLatestService } from '@/api/article.js'
 import { getVideoLatestService } from '@/api/video.js'
+import { normalizeMedia } from '@/utils/media.js'
 
 const activeIndex = ref('1')
 const isLoggedIn = ref(false)

@@ -137,60 +137,6 @@ public class AdminController {
     }
 
     // ============================
-    // 管理后台：文章管理
-    // ============================
-
-    @GetMapping("/articles")
-    public Result adminListArticles(@RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String order,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false, defaultValue = "0") Integer includeDeleted,
-            HttpServletRequest request) {
-        assertAdminLogin(request);
-        // reuse ArticleMapper.list but we need to call with viewerId = null so
-        // liked/favorited false
-        int p = Math.max(page, 1);
-        int ps = Math.min(Math.max(pageSize, 1), 200);
-        int offset = (p - 1) * ps;
-        String sb = sortBy == null ? "create_time" : sortBy;
-        String od = order == null ? "DESC" : order;
-        return Result.success(articleMapper.listForAdmin(ps, offset, sb, od, keyword, includeDeleted));
-    }
-
-    @DeleteMapping("/articles/{id}")
-    public Result adminHardDeleteArticle(@PathVariable Long id, HttpServletRequest request) {
-        assertAdminLogin(request);
-        int rows = articleMapper.hardDeleteById(id);
-        return rows > 0 ? Result.success() : Result.error("彻底删除失败或文章不存在");
-    }
-
-    @GetMapping("/articles/{id}")
-    public Result adminGetArticle(@PathVariable Long id, HttpServletRequest request) {
-        assertAdminLogin(request);
-        // reuse ArticleMapper.selectByIdWithAuthor
-        var a = articleMapper.selectByIdWithAuthor(id);
-        if (a == null)
-            return Result.error("文章不存在");
-        return Result.success(a);
-    }
-
-    @PutMapping("/articles/{id}/delete")
-    public Result adminSoftDeleteArticle(@PathVariable Long id, HttpServletRequest request) {
-        assertAdminLogin(request);
-        int rows = articleMapper.updateIsDeleted(id, 1);
-        return rows > 0 ? Result.success() : Result.error("删除失败或文章不存在");
-    }
-
-    @PutMapping("/articles/{id}/restore")
-    public Result adminRestoreArticle(@PathVariable Long id, HttpServletRequest request) {
-        assertAdminLogin(request);
-        int rows = articleMapper.updateIsDeleted(id, 0);
-        return rows > 0 ? Result.success() : Result.error("恢复失败或文章不存在");
-    }
-
-    // ============================
     // helper：鉴权 & 初始管理员判定
     // ============================
 

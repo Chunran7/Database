@@ -15,11 +15,8 @@
           </div>
 
           <div class="right">
-            <el-button
-              v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
-              :type="authorProfile.followed ? 'primary' : 'default'"
-              @click="toggleFollowAuthor"
-            >
+            <el-button v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
+              :type="authorProfile.followed ? 'primary' : 'default'" @click="toggleFollowAuthor">
               {{ authorProfile.followed ? '已关注' : '关注' }}
             </el-button>
           </div>
@@ -28,7 +25,7 @@
 
       <img v-if="article.firstPicture" :src="article.firstPicture" class="cover" />
       <div v-if="article.description" class="desc">{{ article.description }}</div>
-      <div class="content">{{ article.content }}</div>
+      <div class="content" v-html="normalizedContent"></div>
 
       <div class="actions">
         <el-button :type="article.liked ? 'primary' : 'default'" :disabled="!token" @click="toggleLike">
@@ -47,11 +44,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
-
+import { normalizeMedia } from '@/utils/media.js'
 import { getArticleByIdService, toggleArticleLikeService, toggleArticleFavoriteService } from '@/api/article'
 import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
 
@@ -66,6 +63,12 @@ const article = ref(null)
 const me = ref(null)
 const authorProfile = ref(null)
 
+const normalizedContent = computed(() => {
+  if (!article.value || !article.value.content) return ''
+  // 简单替换 /uploads/ 为 /api/uploads/，假设后端返回的 content 中使用了相对路径
+  return String(article.value.content).replace(/(src=")\/uploads\//g, '$1/api/uploads/')
+})
+
 const formatTime = (t) => {
   if (!t) return ''
   const d = new Date(t)
@@ -79,7 +82,7 @@ const loadMe = async () => {
   if (!hasToken()) return
   try {
     me.value = await getMeService()
-  } catch {}
+  } catch { }
 }
 
 const loadArticle = async () => {
@@ -87,7 +90,7 @@ const loadArticle = async () => {
     article.value = await getArticleByIdService(id.value)
     try {
       authorProfile.value = await getUserProfileService(article.value.userId)
-    } catch (_) {}
+    } catch (_) { }
   } catch (e) {
     ElMessage.error(e?.message || '加载文章失败')
   }

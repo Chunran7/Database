@@ -6,7 +6,7 @@
           <div class="left">
             <div class="title">{{ video.title }}</div>
             <div class="meta">
-              <el-avatar :src="video.authorPic || defaultAvatar" :size="28" />
+              <el-avatar :src="normalizeMedia(video.authorPic) || defaultAvatar" :size="28" />
               <span class="author">{{ video.author || '匿名用户' }}</span>
               <span class="time">{{ formatTime(video.createTime) }}</span>
               <span class="stat">浏览 {{ video.views || 0 }}</span>
@@ -15,19 +15,16 @@
           </div>
 
           <div class="right">
-            <el-button
-              v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
-              :type="authorProfile.followed ? 'primary' : 'default'"
-              @click="toggleFollowAuthor"
-            >
+            <el-button v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
+              :type="authorProfile.followed ? 'primary' : 'default'" @click="toggleFollowAuthor">
               {{ authorProfile.followed ? '已关注' : '关注' }}
             </el-button>
           </div>
         </div>
       </template>
 
-      <video class="player" controls :poster="video.cover">
-        <source :src="video.url" type="video/mp4" />
+      <video class="player" controls :poster="normalizeMedia(video.cover)">
+        <source :src="normalizeMedia(video.url)" type="video/mp4" />
         你的浏览器不支持 video 标签。
       </video>
 
@@ -54,6 +51,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
+import { normalizeMedia } from '@/utils/media.js'
 
 import { getVideoByIdService, toggleVideoLikeService, toggleVideoFavoriteService } from '@/api/video'
 import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
@@ -82,7 +80,7 @@ const loadMe = async () => {
   if (!hasToken()) return
   try {
     me.value = await getMeService()
-  } catch {}
+  } catch { }
 }
 
 const loadVideo = async () => {
@@ -90,7 +88,7 @@ const loadVideo = async () => {
     video.value = await getVideoByIdService(id.value)
     try {
       authorProfile.value = await getUserProfileService(video.value.userId)
-    } catch (_) {}
+    } catch (_) { }
   } catch (e) {
     ElMessage.error(e?.message || '加载视频失败')
   }

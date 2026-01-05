@@ -38,6 +38,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import logo from '@/assets/logo.png'
 import { getMeService } from '@/api/user'
+import { normalizeMedia } from '@/utils/media.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,16 +54,7 @@ const displayName = computed(() => {
   return u.nickname || u.username || ''
 })
 
-const avatarSrc = computed(() => {
-  const u = me.value
-  const raw = u?.userPic || u?.user_pic || ''
-  if (!raw) return ''
-  if (raw.startsWith('http')) return raw
-  if (raw.startsWith('/api/')) return raw
-  // 兼容后端只返回 /uploads/...
-  if (raw.startsWith('/uploads/')) return `/api${raw}`
-  return raw
-})
+const avatarSrc = computed(() => normalizeMedia(me.value?.userPic || me.value?.user_pic || ''))
 
 const refreshAuth = async () => {
   const token = localStorage.getItem('token')

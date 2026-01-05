@@ -15,11 +15,7 @@
             <div class="avatar-box">
               <el-avatar :src="normalizePic(form.userPic) || defaultAvatar" :size="88" />
               <div class="avatar-actions">
-                <el-upload
-                  :show-file-list="false"
-                  :before-upload="beforeAvatarUpload"
-                  :http-request="doAvatarUpload"
-                >
+                <el-upload :show-file-list="false" :before-upload="beforeAvatarUpload" :http-request="doAvatarUpload">
                   <el-button type="primary">本地上传头像</el-button>
                 </el-upload>
                 <div class="hint">支持 png/jpg/jpeg/gif/webp，最大 5MB</div>
@@ -223,6 +219,7 @@ import { useRouter } from 'vue-router'
 
 import defaultAvatar from '@/assets/default.png'
 import { getMeService, updateProfileService, uploadAvatarService, getFollowingService, toggleFollowService } from '@/api/user.js'
+import { normalizeMedia } from '@/utils/media.js'
 import { getMyPostsService, updateMyPostService, deleteMyPostService, getMyLikedPostsService, getMyFavoritedPostsService, togglePostLikeService, togglePostFavoriteService } from '@/api/post.js'
 import { getMyLikedArticlesService, getMyFavoritedArticlesService, toggleArticleLikeService, toggleArticleFavoriteService } from '@/api/article.js'
 import { getMyLikedVideosService, getMyFavoritedVideosService, toggleVideoLikeService, toggleVideoFavoriteService } from '@/api/video.js'
@@ -296,15 +293,8 @@ const isEditedPost = (row) => {
   return String(ct) !== String(ut)
 }
 
-const normalizePic = (raw) => {
-  if (!raw) return ''
-  if (typeof raw !== 'string') return ''
-  if (raw.startsWith('http')) return raw
-  // 兼容：后端返回 /uploads/... 或 /api/uploads/...
-  if (raw.startsWith('/api/')) return raw
-  if (raw.startsWith('/uploads/')) return `/api${raw}`
-  return raw
-}
+// use shared normalizeMedia
+const normalizePic = normalizeMedia
 
 const refreshMe = async () => {
   const data = await getMeService()
@@ -619,5 +609,4 @@ const cancelFavVideo = async (row) => {
 .inner-tabs {
   margin-top: 6px;
 }
-
 </style>
