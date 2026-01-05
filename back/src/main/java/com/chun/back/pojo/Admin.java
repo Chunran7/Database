@@ -10,7 +10,7 @@ public class Admin {
     private Long id;
     private String username;
 
-    private Integer isRoot;
+    // 移除isRoot字段，不再区分管理员角色
     @JsonIgnore
     private String passwordHash; // 对应表里 password
 
