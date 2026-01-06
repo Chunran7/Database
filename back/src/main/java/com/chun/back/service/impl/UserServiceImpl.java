@@ -45,7 +45,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getMe(Long userId) {
         User u = userMapper.selectById(userId);
-        if (u == null) return null;
+        if (u == null)
+            return null;
         u.setFollowerCount(userMapper.followerCount(userId));
         u.setFollowingCount(userMapper.followingCount(userId));
         u.setFollowed(false);
@@ -55,7 +56,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getProfile(Long targetId, Long viewerId) {
         User u = userMapper.selectById(targetId);
-        if (u == null) return null;
+        if (u == null)
+            return null;
         u.setFollowerCount(userMapper.followerCount(targetId));
         u.setFollowingCount(userMapper.followingCount(targetId));
         if (viewerId != null) {
@@ -71,9 +73,12 @@ public class UserServiceImpl implements UserService {
         // 允许邮箱/昵称为空：空字符串会导致
         // 1) 列表 author 的 COALESCE 被空昵称截断（显示成“匿名用户”）
         // 2) user.email 的唯一索引在多用户都填空字符串时冲突
-        if (nickname != null && nickname.trim().isEmpty()) nickname = null;
-        if (email != null && email.trim().isEmpty()) email = null;
-        if (userPic != null && userPic.trim().isEmpty()) userPic = null;
+        if (nickname != null && nickname.trim().isEmpty())
+            nickname = null;
+        if (email != null && email.trim().isEmpty())
+            email = null;
+        if (userPic != null && userPic.trim().isEmpty())
+            userPic = null;
         User u = new User();
         u.setId(userId);
         u.setNickname(nickname);
@@ -111,5 +116,20 @@ public class UserServiceImpl implements UserService {
             }
         }
         return list;
+    }
+
+    @Override
+    public void resetPasswordByEmail(String email, String newPassword) {
+        if (email == null || email.isBlank())
+            throw new RuntimeException("邮箱不能为空");
+        if (newPassword == null || newPassword.isBlank())
+            throw new RuntimeException("密码不能为空");
+        User u = userMapper.findByEmail(email);
+        if (u == null)
+            throw new RuntimeException("该邮箱未绑定任何用户");
+        String md5 = Md5Util.getMD5String(newPassword);
+        int rows = userMapper.updatePasswordById(u.getId(), md5);
+        if (rows != 1)
+            throw new RuntimeException("更新密码失败");
     }
 }

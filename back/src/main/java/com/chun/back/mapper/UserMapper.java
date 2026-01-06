@@ -13,7 +13,8 @@ public interface UserMapper {
     // - 密码列：password（不是 password_hash）
     // - 无 status 列
     // 通过别名将 password 映射到 pojo 的 passwordHash 字段。
-    @Select("SELECT id, username, password AS password_hash, nickname, email, user_pic, status AS status, create_time, update_time " +
+    @Select("SELECT id, username, password AS password_hash, nickname, email, user_pic, status AS status, create_time, update_time "
+            +
             "FROM `user` WHERE username = #{username}")
     User findByUserName(String username);
 
@@ -41,17 +42,17 @@ public interface UserMapper {
     int isFollowed(Long viewerId, Long targetId);
 
     @Select("""
-        SELECT u.id, u.username, u.nickname, u.email, u.user_pic, u.status AS status, u.create_time, u.update_time,
-               (SELECT COUNT(*) FROM user_follow WHERE followee_id = u.id) AS follower_count,
-               (SELECT COUNT(*) FROM user_follow WHERE follower_id = u.id) AS following_count
-        FROM user_follow uf
-        JOIN `user` u ON uf.followee_id = u.id
-        WHERE uf.follower_id = #{userId}
-        ORDER BY uf.create_time DESC, uf.id DESC
-        """)
+            SELECT u.id, u.username, u.nickname, u.email, u.user_pic, u.status AS status, u.create_time, u.update_time,
+                   (SELECT COUNT(*) FROM user_follow WHERE followee_id = u.id) AS follower_count,
+                   (SELECT COUNT(*) FROM user_follow WHERE follower_id = u.id) AS following_count
+            FROM user_follow uf
+            JOIN `user` u ON uf.followee_id = u.id
+            WHERE uf.follower_id = #{userId}
+            ORDER BY uf.create_time DESC, uf.id DESC
+            """)
     List<User> listFollowing(Long userId);
 
-    //“管理员用”的查询与更新
+    // “管理员用”的查询与更新
     @Select("SELECT id, username, nickname, email, user_pic, status, create_time, update_time FROM `user` ORDER BY id DESC")
     List<User> listAll();
 
@@ -60,4 +61,10 @@ public interface UserMapper {
 
     @Select("SELECT COUNT(*) FROM `user`")
     long countAll();
+
+    @Select("SELECT id, username, password AS password_hash, nickname, email, user_pic, status AS status, create_time, update_time FROM `user` WHERE email = #{email}")
+    User findByEmail(String email);
+
+    @Update("UPDATE `user` SET password=#{passwordHash}, update_time=NOW() WHERE id=#{id}")
+    int updatePasswordById(@Param("id") Long id, @Param("passwordHash") String passwordHash);
 }

@@ -23,6 +23,7 @@ public interface UserService {
 
     /**
      * 关注 / 取消关注
+     * 
      * @return 更新后的 profile（followed + 计数）
      */
     User toggleFollow(Long followerId, Long followingId);
@@ -31,4 +32,7 @@ public interface UserService {
      * 我关注的人列表
      */
     List<User> listFollowing(Long userId);
+
+    /** 重置用户密码（直接根据邮箱查找用户并更新密码） */
+    void resetPasswordByEmail(String email, String newPassword);
 }

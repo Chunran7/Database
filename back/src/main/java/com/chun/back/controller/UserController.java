@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.Map;
 import java.io.File;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,18 +22,23 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private com.chun.back.service.VerificationCodeService verificationCodeService;
+
     private Long getLoginUserId(HttpServletRequest request) {
         Object obj = request.getAttribute("claims");
         if (obj instanceof Map<?, ?> m) {
             Object id = m.get("id");
-            if (id != null) return Long.valueOf(id.toString());
+            if (id != null)
+                return Long.valueOf(id.toString());
         }
         return null;
     }
 
     private Long tryGetViewerId(HttpServletRequest request) {
         String auth = request.getHeader("Authorization");
-        if (auth == null || auth.isBlank()) return null;
+        if (auth == null || auth.isBlank())
+            return null;
         String token = auth.startsWith("Bearer ") ? auth.substring(7) : auth;
         try {
             Map<String, Object> claims = JwtUtil.parseToken(token);
@@ -43,6 +47,53 @@ public class UserController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 忘记密码：发送验证码到邮箱（开发模式会在响应中返回验证码以便调试）
+     * 前端应传递 form.x-www-form-urlencoded 或 JSON： { email }
+     */
+    @PostMapping("/forgot/send")
+    public Result sendForgotCode(@RequestParam String email) {
+        if (email == null || email.isBlank())
+            return Result.error("邮箱不能为空");
+        String code = verificationCodeService.sendCode(email.trim());
+        Map<String, Object> res = new HashMap<>();
+        if (code != null) {
+            res.put("devMode", true);
+            res.put("code", code);
+            res.put("message", "开发者模式：验证码已返回给前端，生产环境会发送邮件");
+        } else {
+            res.put("devMode", false);
+            res.put("message", "如果该邮箱已注册，验证码会发送至邮箱。");
+        }
+        return Result.success(res);
+    }
+
+    @PostMapping("/forgot/verify")
+    public Result verifyForgotCode(@RequestParam String email, @RequestParam String code) {
+        if (email == null || email.isBlank() || code == null || code.isBlank())
+            return Result.error("邮箱和验证码不能为空");
+        boolean ok = verificationCodeService.verifyCode(email.trim(), code.trim());
+        if (!ok)
+            return Result.error("验证码错误或已过期");
+        return Result.success();
+    }
+
+    @PostMapping("/forgot/reset")
+    public Result resetPassword(@RequestParam String email, @RequestParam String code,
+            @RequestParam String newPassword) {
+        if (email == null || email.isBlank() || code == null || code.isBlank() || newPassword == null
+                || newPassword.isBlank()) {
+            return Result.error("参数不能为空");
+        }
+        boolean ok = verificationCodeService.verifyCode(email.trim(), code.trim());
+        if (!ok)
+            return Result.error("验证码错误或已过期");
+        // 重置密码
+        userService.resetPasswordByEmail(email.trim(), newPassword);
+        verificationCodeService.removeCode(email.trim());
+        return Result.success();
     }
 
     @PostMapping("/register")
@@ -90,7 +141,8 @@ public class UserController {
     public Result me(HttpServletRequest request) {
         Long userId = getLoginUserId(request);
         User me = userService.getMe(userId);
-        if (me == null) return Result.error("用户不存在");
+        if (me == null)
+            return Result.error("用户不存在");
         return Result.success(me);
     }
 
@@ -98,7 +150,8 @@ public class UserController {
     public Result profile(@PathVariable Long id, HttpServletRequest request) {
         Long viewerId = tryGetViewerId(request);
         User profile = userService.getProfile(id, viewerId);
-        if (profile == null) return Result.error("用户不存在");
+        if (profile == null)
+            return Result.error("用户不存在");
         return Result.success(profile);
     }
 
@@ -144,14 +197,16 @@ public class UserController {
         if (original != null && original.contains(".")) {
             ext = original.substring(original.lastIndexOf('.')).toLowerCase();
         }
-        if (!(".png".equals(ext) || ".jpg".equals(ext) || ".jpeg".equals(ext) || ".gif".equals(ext) || ".webp".equals(ext))) {
+        if (!(".png".equals(ext) || ".jpg".equals(ext) || ".jpeg".equals(ext) || ".gif".equals(ext)
+                || ".webp".equals(ext))) {
             return Result.error("仅支持 png/jpg/jpeg/gif/webp 格式");
         }
         if (file.getSize() > 5L * 1024 * 1024) {
             return Result.error("文件过大（最大 5MB）");
         }
 
-        String filename = userId + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
+        String filename = userId + "_" + System.currentTimeMillis() + "_"
+                + UUID.randomUUID().toString().replace("-", "") + ext;
         String userDir = System.getProperty("user.dir");
         File dir = new File(userDir, "uploads/avatars");
         if (!dir.exists() && !dir.mkdirs()) {

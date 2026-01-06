@@ -35,6 +35,8 @@ public class WebConfig implements WebMvcConfigurer {
                                                 // 用户自身放行
                                                 "/user/login",
                                                 "/user/register",
+                                                // 忘记密码相关接口放行（允许未登录访问）
+                                                "/user/forgot/**",
                                                 "/user/profile/*",
 
                                                 // 公共资源放行（按你项目实际补）
