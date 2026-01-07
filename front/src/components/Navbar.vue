@@ -123,7 +123,6 @@ const handleCommand = (cmd) => {
 .navbar-logo {
   height: 40px;
   width: auto;
-  margin: 10px;
 }
 
 .navbar-right {

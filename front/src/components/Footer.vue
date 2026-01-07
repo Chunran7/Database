@@ -1,6 +1,6 @@
 <template>
   <el-footer class="footer">
-    <p>版权所有 © 医务人员职业丧痛研究团队</p>
+    <p>版权所有 © 风景旅游网站 专注于分享全球美景与旅行故事</p>
   </el-footer>
 </template>
 

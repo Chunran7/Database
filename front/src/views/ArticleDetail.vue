@@ -14,12 +14,7 @@
             </div>
           </div>
 
-          <div class="right">
-            <el-button v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
-              :type="authorProfile.followed ? 'primary' : 'default'" @click="toggleFollowAuthor">
-              {{ authorProfile.followed ? '已关注' : '关注' }}
-            </el-button>
-          </div>
+          <!-- 移除关注按钮 -->
         </div>
       </template>
 
@@ -50,7 +45,7 @@ import { ElMessage } from 'element-plus'
 import defaultAvatar from '@/assets/default.png'
 import { normalizeMedia } from '@/utils/media.js'
 import { getArticleByIdService, toggleArticleLikeService, toggleArticleFavoriteService } from '@/api/article'
-import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
+import { getMeService } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -61,7 +56,7 @@ const id = ref(route.params.id)
 
 const article = ref(null)
 const me = ref(null)
-const authorProfile = ref(null)
+// const authorProfile = ref(null)
 
 const normalizedContent = computed(() => {
   if (!article.value || !article.value.content) return ''
@@ -88,9 +83,7 @@ const loadMe = async () => {
 const loadArticle = async () => {
   try {
     article.value = await getArticleByIdService(id.value)
-    try {
-      authorProfile.value = await getUserProfileService(article.value.userId)
-    } catch (_) { }
+    // 移除关注相关功能
   } catch (e) {
     ElMessage.error(e?.message || '加载文章失败')
   }
@@ -118,15 +111,7 @@ const toggleFavorite = async () => {
   }
 }
 
-const toggleFollowAuthor = async () => {
-  if (!hasToken()) return goLogin()
-  try {
-    authorProfile.value = await toggleFollowService(article.value.userId)
-    ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')
-  } catch (e) {
-    ElMessage.error(e?.message || '操作失败')
-  }
-}
+// 移除关注作者功能
 
 onMounted(async () => {
   await loadMe()

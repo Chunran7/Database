@@ -14,12 +14,7 @@
             </div>
           </div>
 
-          <div class="right">
-            <el-button v-if="token && authorProfile && String(authorProfile.id) !== String(me?.id)"
-              :type="authorProfile.followed ? 'primary' : 'default'" @click="toggleFollowAuthor">
-              {{ authorProfile.followed ? '已关注' : '关注' }}
-            </el-button>
-          </div>
+          <!-- 移除关注按钮 -->
         </div>
       </template>
 
@@ -54,7 +49,7 @@ import defaultAvatar from '@/assets/default.png'
 import { normalizeMedia } from '@/utils/media.js'
 
 import { getVideoByIdService, toggleVideoLikeService, toggleVideoFavoriteService } from '@/api/video'
-import { getMeService, getUserProfileService, toggleFollowService } from '@/api/user'
+import { getMeService } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -65,7 +60,7 @@ const id = ref(route.params.id)
 
 const video = ref(null)
 const me = ref(null)
-const authorProfile = ref(null)
+// const authorProfile = ref(null)
 
 const formatTime = (t) => {
   if (!t) return ''
@@ -86,9 +81,7 @@ const loadMe = async () => {
 const loadVideo = async () => {
   try {
     video.value = await getVideoByIdService(id.value)
-    try {
-      authorProfile.value = await getUserProfileService(video.value.userId)
-    } catch (_) { }
+    // 移除关注相关功能
   } catch (e) {
     ElMessage.error(e?.message || '加载视频失败')
   }
@@ -116,15 +109,7 @@ const toggleFavorite = async () => {
   }
 }
 
-const toggleFollowAuthor = async () => {
-  if (!hasToken()) return goLogin()
-  try {
-    authorProfile.value = await toggleFollowService(video.value.userId)
-    ElMessage.success(authorProfile.value.followed ? '已关注' : '已取消关注')
-  } catch (e) {
-    ElMessage.error(e?.message || '操作失败')
-  }
-}
+// 移除关注作者功能
 
 onMounted(async () => {
   await loadMe()

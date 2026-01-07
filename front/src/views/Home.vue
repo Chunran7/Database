@@ -3,9 +3,22 @@
         <!-- 主体内容 -->
         <el-main class="main">
             <!-- 走马灯 -->
-            <el-carousel height="200px">
-                <el-carousel-item v-for="item in 4" :key="item">
-                    <h3 class="carousel-text">轮播内容 {{ item }}</h3>
+            <el-carousel height="400px" :interval="3000" arrow="hover" indicator-position="outside">
+                <el-carousel-item>
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img src="https://images.unsplash.com/photo-1542281286-9e0a16bb7366?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </el-carousel-item>
+                <el-carousel-item>
+                    <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                        style="width: 100%; height: 100%; object-fit: cover;">
                 </el-carousel-item>
             </el-carousel>
 
@@ -15,13 +28,19 @@
                     <h1 class="section-title">介绍我们</h1>
                     <el-row gutter="40">
                         <el-col :span="12">
-                            <img src="/images/introduction.png" alt="图片描述"
+                            <img src="@/assets/logo.png" alt="网站logo"
                                 style="width: 100%; height: auto; border-radius: 6px;" />
                         </el-col>
                         <el-col :span="12">
-                            <p>
-                                介绍我们的基本内容
-                            </p>
+
+                            欢迎来到我们的风景旅游网站！这里是旅行者的天堂，我们致力于为您提供最精彩的旅游资讯、最实用的旅行攻略和最美丽的风景展示。
+
+
+                            我们的网站汇聚了全球各地的旅游文章，涵盖自然风光、人文景观、美食文化等多个方面。同时，我们还提供丰富的旅游视频，让您身临其境地感受世界各地的美景。
+
+                            在我们的论坛社区，您可以与其他旅行者分享您的旅行经历，交流旅行心得，结识志同道合的朋友。无论您是经验丰富的旅行达人，还是刚刚开始探索世界的新手，都能在这里找到属于您的旅行灵感。
+
+                            让我们一起踏上这场精彩的旅程，探索世界的每一个角落，创造属于您的美好回忆！
                         </el-col>
                     </el-row>
                 </section>
