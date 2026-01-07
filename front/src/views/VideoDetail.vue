@@ -122,10 +122,20 @@ onMounted(async () => {
   max-width: 980px;
   margin: 0 auto;
   padding: 18px 12px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .card {
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .header {
@@ -133,20 +143,35 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  padding: 12px 0;
 }
 
 .title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 800;
+  line-height: 1.3;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
 }
 
 .meta {
-  margin-top: 8px;
+  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  font-size: 12px;
+  gap: 16px;
+  font-size: 13px;
   color: #666;
 }
 
@@ -154,19 +179,50 @@ onMounted(async () => {
   width: 100%;
   border-radius: 12px;
   background: #000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 18px;
+  transition: all 0.3s ease;
+}
+
+.player:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .desc {
-  margin-top: 12px;
-  padding: 10px;
-  border-radius: 10px;
+  margin-top: 0;
+  padding: 15px;
+  border-radius: 12px;
   background: #f7f7f7;
   color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  border-left: 4px solid #667eea;
 }
 
 .actions {
-  margin-top: 14px;
+  margin-top: 20px;
   display: flex;
-  gap: 10px;
+  gap: 16px;
+  padding: 15px 0;
+  border-top: 1px solid #eee;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  padding: 8px 20px;
+  font-weight: 500;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 头像样式优化 */
+:deep(.el-avatar) {
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 </style>

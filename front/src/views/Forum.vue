@@ -245,15 +245,26 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 18px 12px;
+html,
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .forum-page {
   display: flex;
   gap: 16px;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 12px;
+  width: 100%;
 }
 
 .forum-aside {
@@ -266,22 +277,32 @@ onMounted(async () => {
 .user-card {
   display: flex;
   gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 16px;
+  border-radius: 16px;
   background: #fff;
   cursor: pointer;
-  border: 1px solid #eee;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .user-avatar img {
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  border: 3px solid #f0f4f8;
 }
 
 .user-nickname {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 16px;
+  color: #2c3e50;
 }
 
 .user-action {
@@ -291,17 +312,28 @@ onMounted(async () => {
 }
 
 .btn-post {
-  border-radius: 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3498db, #2ecc71);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-post:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  background: linear-gradient(135deg, #2980b9, #27ae60);
 }
 
 .filters {
-  padding: 12px;
+  padding: 16px;
   background: #fff;
-  border-radius: 12px;
-  border: 1px solid #eee;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .filters .row {
@@ -315,20 +347,54 @@ onMounted(async () => {
 }
 
 .post-list-card {
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0;
+}
+
+.header span {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.header span::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  border-radius: 2px;
 }
 
 .post-item {
   display: flex;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid #f0f4f8;
+  transition: all 0.3s ease;
+  background: #fff;
+  margin: 0 8px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.post-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  background: #fafbfc;
 }
 
 .left {
@@ -338,22 +404,36 @@ onMounted(async () => {
 
 .title {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
+  color: #2c3e50;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.title:hover {
+  color: #3498db;
 }
 
 .meta {
-  margin-top: 6px;
+  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  color: #666;
+  gap: 12px;
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .preview {
-  margin-top: 6px;
-  color: #444;
-  font-size: 13px;
+  margin-top: 8px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -364,18 +444,91 @@ onMounted(async () => {
 .right {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
+}
+
+.right .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.right .el-button--primary {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.right .el-button--primary:hover {
+  background: linear-gradient(135deg, #2980b9, #2471a3);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(52, 152, 219, 0.4);
+}
+
+.right .el-button--warning {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.right .el-button--warning:hover {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(243, 156, 18, 0.4);
+}
+
+.right .el-button--default {
+  background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+  color: #2c3e50;
+}
+
+.right .el-button--default:hover {
+  background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(236, 240, 241, 0.8);
 }
 
 .empty {
-  padding: 16px;
+  padding: 40px 20px;
   color: #888;
+  text-align: center;
+  font-size: 14px;
 }
 
 .pager {
-  margin-top: 12px;
+  margin-top: 20px;
+  padding: 16px;
   display: flex;
   justify-content: center;
+  background: #fff;
+  border-radius: 12px;
+  margin: 16px 8px 0;
+}
+
+.pager .el-pagination__sizes,
+.pager .el-pagination__total,
+.pager .el-pagination__jump {
+  color: #7f8c8d;
+}
+
+.pager .el-pagination button {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.pager .el-pagination button:hover {
+  background: #f0f4f8;
+}
+
+.pager .el-pagination .el-pager li {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.pager .el-pagination .el-pager li:hover {
+  background: #f0f4f8;
+}
+
+.pager .el-pagination .el-pager li.active {
+  background: linear-gradient(135deg, #3498db, #2ecc71);
+  border-color: transparent;
 }
 </style>

@@ -515,6 +515,8 @@ const cancelFavVideo = async (row) => {
 <style scoped>
 .profile-page {
   padding: 18px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .header {
@@ -524,8 +526,20 @@ const cancelFavVideo = async (row) => {
 }
 
 .title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  position: relative;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
 }
 
 .profile-row {
@@ -566,6 +580,7 @@ const cancelFavVideo = async (row) => {
   font-size: 20px;
   font-weight: 700;
   display: block;
+  color: #667eea;
 }
 
 .lbl {
@@ -608,5 +623,94 @@ const cancelFavVideo = async (row) => {
 
 .inner-tabs {
   margin-top: 6px;
+}
+
+/* 卡片样式优化 */
+:deep(.el-card) {
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+:deep(.el-card:hover) {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header-wrapper) {
+  border-radius: 12px 12px 0 0;
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+:deep(.el-table__header th) {
+  color: white;
+  font-weight: 600;
+}
+
+:deep(.el-table__body-wrapper) {
+  border-radius: 0 0 12px 12px;
+}
+
+:deep(.el-table__body tr) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-table__body tr:hover) {
+  background-color: #f0f4ff;
+}
+
+/* 头像样式优化 */
+:deep(.el-avatar) {
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 标签页样式优化 */
+:deep(.el-tabs__item) {
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-tabs__item:hover) {
+  color: #667eea;
+}
+
+:deep(.el-tabs__active-bar) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 表单样式优化 */
+:deep(.el-form-item__label) {
+  font-weight: 500;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 </style>
