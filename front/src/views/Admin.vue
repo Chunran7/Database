@@ -1,22 +1,36 @@
 <template>
   <div class="admin-container">
     <div v-if="!isLoggedIn" class="login-wrapper">
+      <!-- 动态背景装饰 -->
+      <div class="login-bg-shape shape-1"></div>
+      <div class="login-bg-shape shape-2"></div>
+      <div class="login-bg-shape shape-3"></div>
+      <div class="login-bg-shape shape-4"></div>
+
       <el-card class="login-box" shadow="hover">
         <div class="login-header">
-          <img src="@/assets/logo.png" alt="Logo" class="login-logo" />
-          <h2>后台管理系统</h2>
+          <div class="login-logo-container">
+            <img src="@/assets/logo.png" alt="Logo" class="login-logo" />
+          </div>
+          <h2 class="login-title">后台管理系统</h2>
+          <p class="login-subtitle">安全登录，高效管理</p>
         </div>
-        <el-form :model="loginForm" ref="loginFormRef" label-position="top">
-          <el-form-item label="管理员账号">
-            <el-input v-model="loginForm.username" placeholder="请输入账号" :prefix-icon="User" />
+
+        <el-form :model="loginForm" ref="loginFormRef" label-position="top" class="login-form">
+          <el-form-item label="管理员账号" prop="username" class="form-item">
+            <el-input v-model="loginForm.username" placeholder="请输入管理员账号" :prefix-icon="User" class="login-input" />
           </el-form-item>
-          <el-form-item label="密码">
+
+          <el-form-item label="密码" prop="password" class="form-item">
             <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password
-              @keyup.enter="handleLogin" />
+              @keyup.enter="handleLogin" class="login-input" />
           </el-form-item>
-          <el-button type="primary" class="login-btn" @click="handleLogin" :loading="loading">
-            立即登录
-          </el-button>
+
+          <div class="form-footer">
+            <el-button type="primary" class="login-btn" @click="handleLogin" :loading="loading">
+              立即登录
+            </el-button>
+          </div>
         </el-form>
       </el-card>
     </div>
@@ -442,29 +456,270 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   height: 100%;
-  background: linear-gradient(135deg, #2d3a4b 0%, #1f2d3d 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg-shape {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.login-bg-shape.shape-1 {
+  width: 300px;
+  height: 300px;
+  top: -100px;
+  right: -100px;
+  animation-delay: 0s;
+}
+
+.login-bg-shape.shape-2 {
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.05);
+  bottom: -150px;
+  left: -150px;
+  animation-delay: -2s;
+}
+
+.login-bg-shape.shape-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.08);
+  top: 50%;
+  left: 10%;
+  transform: translateY(-50%);
+  animation-delay: -1s;
+}
+
+.login-bg-shape.shape-4 {
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.05);
+  bottom: 20%;
+  right: 15%;
+  animation-delay: -3s;
+}
+
+/* 浮动动画 */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
 }
 
 .login-box {
-  width: 400px;
-  border-radius: 8px;
+  width: 420px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.login-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 20px;
+  padding: 30px 0 20px;
+}
+
+.login-logo-container {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.login-logo-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
 }
 
 .login-logo {
   width: 60px;
   height: 60px;
-  margin-bottom: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+}
+
+.login-form {
+  padding: 0 30px 30px;
+}
+
+.form-item {
+  margin-bottom: 25px;
+}
+
+.form-footer {
+  margin-top: 30px;
+}
+
+.login-input {
+  transition: all 0.3s ease;
 }
 
 .login-btn {
   width: 100%;
-  padding: 20px 0;
+  padding: 14px 0;
   font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.login-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-btn .el-button__text {
+  position: relative;
+  z-index: 1;
+}
+
+:deep(.el-form-item__label) {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+:deep(.el-form-item:hover .el-form-item__label) {
+  color: #667eea;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e4e7ed;
+  background-color: #ffffff;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+:deep(.el-icon-user),
+:deep(.el-icon-lock) {
+  color: #909399;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input.is-focus .el-icon-user),
+:deep(.el-input.is-focus .el-icon-lock) {
+  color: #667eea;
+  transform: scale(1.1);
+}
+
+/* 添加登录卡片的入场动画 */
+.login-box {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式设计优化 */
+@media (max-width: 480px) {
+  .login-box {
+    width: 90%;
+    margin: 0 20px;
+  }
+
+  .login-bg-shape.shape-1 {
+    width: 200px;
+    height: 200px;
+    top: -50px;
+    right: -50px;
+  }
+
+  .login-bg-shape.shape-2 {
+    width: 250px;
+    height: 250px;
+    bottom: -100px;
+    left: -100px;
+  }
 }
 
 .main-layout {

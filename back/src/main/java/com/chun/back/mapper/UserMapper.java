@@ -48,7 +48,7 @@ public interface UserMapper {
             FROM user_follow uf
             JOIN `user` u ON uf.followee_id = u.id
             WHERE uf.follower_id = #{userId}
-            ORDER BY uf.create_time DESC, uf.id DESC
+            ORDER BY uf.create_time DESC
             """)
     List<User> listFollowing(Long userId);
 

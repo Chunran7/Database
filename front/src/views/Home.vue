@@ -209,7 +209,7 @@ const goToVideo = (id) => {
 
 const exploreMore = () => {
     // 可以根据需要导航到相应页面
-    router.push('/articles')
+    router.push('/article')
 }
 
 </script>

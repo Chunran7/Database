@@ -148,12 +148,10 @@ CREATE TABLE `video` (
 DROP TABLE IF EXISTS `post_like`;
 
 CREATE TABLE `post_like` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '点赞记录ID',
   `post_id` BIGINT NOT NULL COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '点赞用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_post_like` (`post_id`, `user_id`),
+  PRIMARY KEY (`post_id`, `user_id`),
   KEY `idx_post_like_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_post_like_post` FOREIGN KEY (`post_id`) REFERENCES `post` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_post_like_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -165,12 +163,10 @@ CREATE TABLE `post_like` (
 DROP TABLE IF EXISTS `post_favorite`;
 
 CREATE TABLE `post_favorite` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '收藏记录ID',
   `post_id` BIGINT NOT NULL COMMENT '帖子ID',
   `user_id` BIGINT NOT NULL COMMENT '收藏用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_post_favorite` (`post_id`, `user_id`),
+  PRIMARY KEY (`post_id`, `user_id`),
   KEY `idx_post_favorite_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_post_favorite_post` FOREIGN KEY (`post_id`) REFERENCES `post` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_post_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -182,12 +178,10 @@ CREATE TABLE `post_favorite` (
 DROP TABLE IF EXISTS `article_like`;
 
 CREATE TABLE `article_like` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '点赞记录ID',
   `article_id` BIGINT NOT NULL COMMENT '文章ID',
   `user_id` BIGINT NOT NULL COMMENT '点赞用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_article_like` (`article_id`, `user_id`),
+  PRIMARY KEY (`article_id`, `user_id`),
   KEY `idx_article_like_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_article_like_article` FOREIGN KEY (`article_id`) REFERENCES `article` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_article_like_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -199,12 +193,10 @@ CREATE TABLE `article_like` (
 DROP TABLE IF EXISTS `article_favorite`;
 
 CREATE TABLE `article_favorite` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '收藏记录ID',
   `article_id` BIGINT NOT NULL COMMENT '文章ID',
   `user_id` BIGINT NOT NULL COMMENT '收藏用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_article_favorite` (`article_id`, `user_id`),
+  PRIMARY KEY (`article_id`, `user_id`),
   KEY `idx_article_favorite_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_article_favorite_article` FOREIGN KEY (`article_id`) REFERENCES `article` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_article_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -216,12 +208,10 @@ CREATE TABLE `article_favorite` (
 DROP TABLE IF EXISTS `video_like`;
 
 CREATE TABLE `video_like` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '点赞记录ID',
   `video_id` BIGINT NOT NULL COMMENT '视频ID',
   `user_id` BIGINT NOT NULL COMMENT '点赞用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_video_like` (`video_id`, `user_id`),
+  PRIMARY KEY (`video_id`, `user_id`),
   KEY `idx_video_like_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_video_like_video` FOREIGN KEY (`video_id`) REFERENCES `video` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_video_like_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -233,12 +223,10 @@ CREATE TABLE `video_like` (
 DROP TABLE IF EXISTS `video_favorite`;
 
 CREATE TABLE `video_favorite` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '收藏记录ID',
   `video_id` BIGINT NOT NULL COMMENT '视频ID',
   `user_id` BIGINT NOT NULL COMMENT '收藏用户ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_video_favorite` (`video_id`, `user_id`),
+  PRIMARY KEY (`video_id`, `user_id`),
   KEY `idx_video_favorite_user_time` (`user_id`, `create_time`),
   CONSTRAINT `fk_video_favorite_video` FOREIGN KEY (`video_id`) REFERENCES `video` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_video_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -250,12 +238,10 @@ CREATE TABLE `video_favorite` (
 DROP TABLE IF EXISTS `user_follow`;
 
 CREATE TABLE `user_follow` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '关注关系ID',
   `follower_id` BIGINT NOT NULL COMMENT '关注者(粉丝)ID',
   `followee_id` BIGINT NOT NULL COMMENT '被关注者ID',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_follow` (`follower_id`, `followee_id`),
+  PRIMARY KEY (`follower_id`, `followee_id`),
   KEY `idx_followee_time` (`followee_id`, `create_time`),
   CONSTRAINT `fk_follow_follower` FOREIGN KEY (`follower_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_follow_followee` FOREIGN KEY (`followee_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -274,18 +260,11 @@ CREATE TABLE `admin` (
   `admin_pic` VARCHAR(255) DEFAULT NULL COMMENT '头像',
   `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
   `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态(1启用,0停用)',
-  `last_login_time` DATETIME DEFAULT NULL COMMENT '最后登录时间',
-  `last_login_ip` VARCHAR(64) DEFAULT NULL COMMENT '最后登录IP',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_admin_username` (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '管理员表';
-
-INSERT INTO
-  `admin`(username, password, nickname, status)
-VALUES
-  ('admin', MD5('admin123'), 'Super Admin', 1);
 
 -- 删除is_root列，不再区分管理员角色
 SET

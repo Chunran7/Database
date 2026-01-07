@@ -11,7 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.chun.back.pojo.Article;
 
 import com.chun.back.mapper.ArticleMapper;
 import com.chun.back.mapper.VideoMapper;
@@ -134,6 +137,53 @@ public class AdminController {
             return Result.error("status 只能是 0/1");
         int rows = userMapper.updateStatus(id, status);
         return rows > 0 ? Result.success() : Result.error("更新失败");
+    }
+
+    // ============================
+    // 4) 文章管理
+    // ============================
+
+    @GetMapping("/articles")
+    public Result getArticles(@RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int includeDeleted,
+            HttpServletRequest request) {
+        assertAdminLogin(request);
+        int offset = (page - 1) * pageSize;
+        List<Article> articles = articleMapper.listWithDeleted(pageSize, offset, keyword, includeDeleted);
+        return Result.success(articles);
+    }
+
+    @GetMapping("/articles/{id}")
+    public Result getArticleById(@PathVariable Long id, HttpServletRequest request) {
+        assertAdminLogin(request);
+        Article article = articleMapper.selectByIdWithAuthorWithDeleted(id);
+        if (article == null) {
+            return Result.error("文章不存在");
+        }
+        return Result.success(article);
+    }
+
+    @PutMapping("/articles/{id}/delete")
+    public Result softDeleteArticle(@PathVariable Long id, HttpServletRequest request) {
+        assertAdminLogin(request);
+        int rows = articleMapper.updateIsDeleted(id, 1);
+        return rows > 0 ? Result.success() : Result.error("删除失败");
+    }
+
+    @PutMapping("/articles/{id}/restore")
+    public Result restoreArticle(@PathVariable Long id, HttpServletRequest request) {
+        assertAdminLogin(request);
+        int rows = articleMapper.updateIsDeleted(id, 0);
+        return rows > 0 ? Result.success() : Result.error("恢复失败");
+    }
+
+    @DeleteMapping("/articles/{id}")
+    public Result hardDeleteArticle(@PathVariable Long id, HttpServletRequest request) {
+        assertAdminLogin(request);
+        int rows = articleMapper.deleteById(id);
+        return rows > 0 ? Result.success() : Result.error("删除失败");
     }
 
     // ============================

@@ -24,7 +24,7 @@ public interface AdminMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Admin admin);
 
-    @Update("UPDATE admin SET last_login_time = NOW(), last_login_ip = #{ip}, update_time = NOW() WHERE id = #{id}")
+    @Update("UPDATE admin SET update_time = NOW() WHERE id = #{id}")
     int updateLoginInfo(@Param("id") Long id, @Param("ip") String ip);
     
     @Select("SELECT id, status FROM admin WHERE id = #{id} LIMIT 1")
